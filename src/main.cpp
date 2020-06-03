@@ -193,6 +193,7 @@ int main()
     float neutronE; output_tree->Branch("neutronE", &neutronE, "neutronE");
     float neutronAngle; output_tree->Branch("neutronAngle", &neutronAngle, "neutronAngle");
     float nutrinoE; output_tree->Branch("neutrinoE", &neutrinoE, "neutrinoE");            
+    float singleTransverseVariable; output_tree->Branch("singleTransverseVariable", &singleTransverseVariable, "singleTransverseVariable");
 
     for(int event = 0; event < tree.GetEntries(); event++)
     {
@@ -212,6 +213,7 @@ int main()
         neutronE = -1000;
         neutronAngle = -1000;
         nutrinoE = -1000;
+        singleTransverseVariable = -1000;
 
         //out of fiducial volume
         if(abs(t_vtx[0]) > 50 || abs(t_vtx[1]) > 50 || abs(t_vtx[2]) > 50)
@@ -759,9 +761,6 @@ int main()
         //transverse momentum
         for(int inFS = 0; inFS < t_nFS; inFS++)
         {
-            if(abs(t_fsPdg[inFS]) == 11 || abs(t_fsPdg[inFS]) == 13)
-            {
-            }
         }
         neutrinoE = t_nuEnergy;
         category = earliest_hit.GetCategory();
