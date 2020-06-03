@@ -2,3 +2,7 @@
 /cmake_install.cmake
 /CMakeFiles/
 /Makefile
+/.DS_Store
+/src/*.swp
+/include/*.swp
+/*.dylib
