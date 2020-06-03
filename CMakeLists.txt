@@ -13,5 +13,5 @@ ADD_LIBRARY(bkg SHARED ${CMAKE_CURRENT_SOURCE_DIR}/src/background.cpp)
 TARGET_LINK_LIBRARIES(bkg ${ROOT_LIBRARIES})
 
 ADD_EXECUTABLE(BackgroundAnalysis ${CMAKE_CURRENT_SOURCE_DIR}/src/background.cpp)
-TARGET_LINK_LIBRARIES(BackgroundAnalsis bkg)
+TARGET_LINK_LIBRARIES(BackgroundAnalysis bkg)
 
