@@ -758,9 +758,14 @@ int main()
             hitPDG = earliest_hit.GetHitPDG();
         }
         //transverse momentum
+        float Px = 0;
+        float Py = 0;
         for(int inFS = 0; inFS < t_nFS; inFS++)
         {
+            Px += t_fsPx[inFS];
+            Py += t_fsPx[inFS];
         }
+        singleTransverseVariable = sqrt(Px*Px+Py*Py);
         neutrinoE = t_nuEnergy;
         category = earliest_hit.GetCategory();
         output_tree->Fill();
