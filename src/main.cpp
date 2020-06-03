@@ -763,7 +763,7 @@ int main()
         for(int inFS = 0; inFS < t_nFS; inFS++)
         {
             Px += t_fsPx[inFS];
-            Py += t_fsPx[inFS];
+            Py += t_fsPy[inFS];
         }
         singleTransverseVariable = sqrt(Px*Px+Py*Py);
         neutrinoE = t_nuEnergy;
