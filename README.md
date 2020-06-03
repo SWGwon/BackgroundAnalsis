@@ -1,5 +1,5 @@
 # BackgroundAnalsis
-## install
+## Install
 ```bash
 cmake CMakeLists.txt
 make
