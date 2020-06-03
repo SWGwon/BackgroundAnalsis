@@ -35,4 +35,3 @@ double GetDistance(float a[], Hit hit)
 {
     return pow(pow(a[0]-hit.GetX(),2)+pow(a[1]-hit.GetY(),2)+pow(a[2]-hit.GetZ(),2),0.5);
 }
-
