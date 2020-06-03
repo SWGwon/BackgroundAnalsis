@@ -1,7 +1,7 @@
 # BackgroundAnalsis
 ## install
 ```cmake CMakeLists.txt```
-make
+```make```
 
 ## Run
-./BackgroundAnalsis
+```./BackgroundAnalsis```
