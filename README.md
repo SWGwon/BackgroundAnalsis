@@ -11,5 +11,5 @@ make
 
 ## Run
 ```bash
-./BackgroundAnalsis
+./BackgroundAnalysis
 ```
