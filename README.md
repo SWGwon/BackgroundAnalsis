@@ -1,6 +1,6 @@
 # BackgroundAnalsis
 ## install
-cmake CMakeLists.txt
+```cmake CMakeLists.txt```
 make
 
 ## Run
