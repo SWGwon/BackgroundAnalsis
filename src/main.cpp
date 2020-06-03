@@ -60,14 +60,13 @@ int main()
     //}
     gErrorIgnoreLevel = kWarning;
 
-    TChain tree("tree");
-    cout<<"---------------------------"<<endl;
-    cout<<"file loading..."<<endl;
-
     int filenum;
     cout<<"filenum :"<<endl;
     cin>>filenum;
+    cout<<"---------------------------"<<endl;
+    cout<<"file loading..."<<endl;
 
+    TChain tree("tree");
     for(int i = 1; i != filenum+1; i++)
     { //cout<<"\033[1APROD"<<101<<": "<<(double)(i*100/filenum)<<"%\033[1000D"<<endl;
         string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion_wNuE.root",i);
