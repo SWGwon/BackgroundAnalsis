@@ -1,2 +1,7 @@
 # BackgroundAnalsis
-asdf
+## install
+cmake CMakeLists.txt
+make
+
+## Run
+./BackgroundAnalsis
