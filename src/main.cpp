@@ -229,6 +229,7 @@ int main()
                 break;
             }
         }
+
         //if it's not CC skip this event
         if(!is_CC)
             continue;
@@ -303,7 +304,6 @@ int main()
             if(tof == 1)
                 tof = 0.5;
 
-
             if(tof > 0)
             {
                 temp_neutron_Hit.SetTOF(tof);
@@ -326,7 +326,6 @@ int main()
                 temp_neutron_Hit.SetTrueT(t_neutronHitT[n_neutronHit]);
                 temp_neutron_Hit.SetTrueE(t_neutronTrueE[n_neutronHit]);
                 temp_neutron_Hit.SetCubeE(t_neutronCubeE[n_neutronHit]);
-
 
                 temp_neutron_Hit.SetParentId(t_neutronParentId[n_neutronHit]);
                 temp_neutron_Hit.parentPdg = t_neutronParentPDG[n_neutronHit];
@@ -386,7 +385,6 @@ int main()
             //Fix a bug from edep-sim
             if(tof == 1)
                 tof = 0.5;
-
 
             if(tof > 0)
             {
@@ -637,10 +635,11 @@ int main()
                 angle = -1000;
                 distanceCHit = -1000;
             }
-            beta_signal->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
-            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
-            TOF_signal->Fill(earliest_hit.GetTOF());
-            tof = earliest_hit.GetTOF();
+
+            beta_signal->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
+            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
+            TOF_signal->Fill(earliest_hit.GetTOFSmear());
+            tof = earliest_hit.GetTOFSmear();
             CubeE_signal->Fill(earliest_hit.GetCubeE());
             cubeE = earliest_hit.GetCubeE();
             nCubeDis_signal->Fill(cube_cluster.size());
@@ -675,10 +674,10 @@ int main()
                 angle = -1000;
                 distanceCHit = -1000;
             }
-            beta_secondary_neutron->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
-            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
-            TOF_secondary_neutron->Fill(earliest_hit.GetTOF());
-            tof = earliest_hit.GetTOF();
+            beta_secondary_neutron->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
+            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
+            TOF_secondary_neutron->Fill(earliest_hit.GetTOFSmear());
+            tof = earliest_hit.GetTOFSmear();
             CubeE_secondary_neutron->Fill(earliest_hit.GetCubeE());
             cubeE = earliest_hit.GetCubeE();
             nCubeDis_secondary_neutron->Fill(cube_cluster.size());
@@ -713,10 +712,10 @@ int main()
                 angle = -1000;
                 distanceCHit = -1000;
             }
-            beta_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity);
-            beta = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity;
-            TOF_primary_gamma->Fill(earliest_hit.GetTOF());
-            tof = earliest_hit.GetTOF();
+            beta_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity);
+            beta = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity;
+            TOF_primary_gamma->Fill(earliest_hit.GetTOFSmear());
+            tof = earliest_hit.GetTOFSmear();
             CubeE_primary_gamma->Fill(earliest_hit.GetCubeE());
             cubeE = earliest_hit.GetCubeE();
             nCubeDis_primary_gamma->Fill(cube_cluster.size());
@@ -748,10 +747,10 @@ int main()
                 angle = -1000;
                 distanceCHit = -1000;
             }
-            beta_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
-            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
-            TOF_secondary_gamma->Fill(earliest_hit.GetTOF());
-            tof = earliest_hit.GetTOF();
+            beta_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
+            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
+            TOF_secondary_gamma->Fill(earliest_hit.GetTOFSmear());
+            tof = earliest_hit.GetTOFSmear();
             CubeE_secondary_gamma->Fill(earliest_hit.GetCubeE());
             cubeE = earliest_hit.GetCubeE();
             nCubeDis_secondary_gamma->Fill(cube_cluster.size());
@@ -779,7 +778,7 @@ int main()
 
     TCanvas * can = new TCanvas;
 
-    TLegend * legend = new TLegend(0.1,0.7,0.5,0.9);
+    TLegend * legend = new TLegend(0.33,0.8,0.66,0.9);
     legend->AddEntry(leverarm_signal,"signal","l");
     legend->AddEntry(leverarm_secondary_neutron,"secondary neutron","l");
     legend->AddEntry(leverarm_primary_gamma,"primary gamma","l");
@@ -796,6 +795,7 @@ int main()
     leverarm_signal->SetLineColor(2);
     leverarm_signal->SetStats(0);
     leverarm_signal->Scale(1/leverarm_signal->Integral(),"nosw2");
+    leverarm_signal->GetXaxis()->SetTitle("cm");
     leverarm_signal->GetYaxis()->SetRangeUser(0,0.4);
     leverarm_signal->SetTitle("lever arm");
     leverarm_signal->Draw();
@@ -828,6 +828,7 @@ int main()
     angle_signal->SetLineColor(2);
     angle_signal->SetStats(0);
     angle_signal->Scale(1/angle_signal->Integral(),"nosw2");
+    angle_signal->GetXaxis()->SetTitle("pi");
     angle_signal->GetYaxis()->SetRangeUser(0,0.4);
     angle_signal->SetTitle("angle");
     angle_signal->Draw();
@@ -860,6 +861,7 @@ int main()
     beta_signal->SetLineColor(2);
     beta_signal->SetStats(0);
     beta_signal->Scale(1/beta_signal->Integral(),"nosw2");
+    beta_signal->GetXaxis()->SetTitle("speed of particle/c");
     beta_signal->GetYaxis()->SetRangeUser(0,0.3);
     beta_signal->SetTitle("beta");
     beta_signal->Draw();
@@ -892,6 +894,7 @@ int main()
     distance_signal->SetLineColor(2);
     distance_signal->SetStats(0);
     distance_signal->Scale(1/distance_signal->Integral(),"nosw2");
+    distance_signal->GetXaxis()->SetTitle("cm");
     distance_signal->GetYaxis()->SetRangeUser(0,0.6);
     distance_signal->SetTitle("distance b/w C and hit");
     distance_signal->Draw();
@@ -924,6 +927,7 @@ int main()
     TOF_signal->SetLineColor(2);
     TOF_signal->SetStats(0);
     TOF_signal->Scale(1/TOF_signal->Integral(),"nosw2");
+    TOF_signal->GetXaxis()->SetTitle("ns");
     TOF_signal->GetYaxis()->SetRangeUser(0,0.7);
     TOF_signal->SetTitle("Time of flight");
     TOF_signal->Draw();
@@ -956,6 +960,7 @@ int main()
     CubeE_signal->SetLineColor(2);
     CubeE_signal->SetStats(0);
     CubeE_signal->Scale(1/CubeE_signal->Integral(),"nosw2");
+    CubeE_signal->GetXaxis()->SetTitle("MeV");
     CubeE_signal->GetYaxis()->SetRangeUser(0,0.7);
     CubeE_signal->SetTitle("CubeE");
     CubeE_signal->Draw();
@@ -989,6 +994,7 @@ int main()
     nCubeDis_signal->SetLineColor(2);
     nCubeDis_signal->SetStats(0);
     nCubeDis_signal->Scale(1/nCubeDis_signal->Integral(),"nosw2");
+    nCubeDis_signal->GetXaxis()->SetTitle("number of fired cubes");
     nCubeDis_signal->GetYaxis()->SetRangeUser(0,0.5);
     nCubeDis_signal->SetTitle("number of cube");
     nCubeDis_signal->Draw();
