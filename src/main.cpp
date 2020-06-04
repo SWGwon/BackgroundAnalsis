@@ -1,4 +1,5 @@
-#include "background.h"
+#include "hit.h"
+#include "functions.h"
 
 using namespace std;
 
@@ -768,6 +769,7 @@ int main()
         neutrinoE = t_nuEnergy;
         category = earliest_hit.GetCategory();
         output_tree->Fill();
+
     }//end of event iterate
 
     outfile->Write();

@@ -2,8 +2,10 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.0 FATAL_ERROR)
 PROJECT (BackgroundAnalysis)
 
 SET(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
 SET(SRC_FILES 
-    ${SRC_DIR}/background.cpp
+    ${SRC_DIR}/hit.cpp
+    ${SRC_DIR}/functions.cpp
     ${SRC_DIR}/main.cpp
     )
 
