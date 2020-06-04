@@ -1,60 +1,62 @@
 #include "hit.h"
 #include "functions.h"
 
-//signal{
-TH1F * leverarm_signal = new TH1F("leverarm_signal","lever arm of signal",20,0,200);
-TH1F * angle_signal = new TH1F("angle_signal","angle between C and signal hit",20,0,1);
-TH1F * beta_signal = new TH1F("beta_signal","beta of signal",30,0,1.5);
-TH1F * distance_signal = new TH1F("distance_signal","distance b/w C and signal hit",20,0,200);
-TH1F * TOF_signal = new TH1F("TOF_signal","time of flight of signal", 25,0,25);
-TH1F * CubeE_signal = new TH1F("CubeE_signal", "CubeE of signal", 30, 0, 15);
-TH1F * nCubeDis_signal = new TH1F("nCubeDis_signal","number of cubes, signal", 50, 0, 100);
-//}
-//secondary neutron{ 
-TH1F * leverarm_secondary_neutron = new TH1F("leverarm_secondary_neutron","lever arm of secondary_neutron",20,0,200);
-TH1F * angle_secondary_neutron = new TH1F("angle_secondary_neutron","angle between C and secondary_neutron hit",20,0,1);
-TH1F * beta_secondary_neutron = new TH1F("beta_secondary_neutron","beta of secondary_neutron",30,0,1.5);
-TH1F * distance_secondary_neutron = new TH1F("distance_secondary_neutron","distance b/w C and secondary_neutron hit",20,0,200);
-TH1F * TOF_secondary_neutron = new TH1F("TOF_secondary_neutron","time of flight of secondary_neutron", 25,0,25);
-TH1F * CubeE_secondary_neutron = new TH1F("CubeE_secondary_neutron", "CubeE of secondary_neutron", 30, 0, 15);
-TH1F * nCubeDis_secondary_neutron = new TH1F("nCubeDis_secondary_neutron","number of cubes, secondary neutron", 50, 0, 100);
-//}
-
-//primary gamma{
-TH1F * leverarm_primary_gamma = new TH1F("leverarm_primary_gamma","lever arm of primary_gamma",20,0,200);
-TH1F * angle_primary_gamma = new TH1F("angle_primary_gamma","angle between C and primary_gamma hit",20,0,1);
-TH1F * beta_primary_gamma = new TH1F("beta_primary_gamma","beta of primary_gamma",30,0,1.5);
-TH1F * distance_primary_gamma = new TH1F("distance_primary_gamma","distance b/w C and primary_gamma hit",20,0,200);
-TH1F * TOF_primary_gamma = new TH1F("TOF_primary_gamma","time of flight of primary_gamma", 25,0,25);
-TH1F * CubeE_primary_gamma = new TH1F("CubeE_primary_gamma", "CubeE of primary_gamma", 30, 0, 15);
-TH1F * nCubeDis_primary_gamma = new TH1F("nCubeDis_primary_gamma","number of cubes, primary gamma", 50, 0, 100);
-//}
-
-//secondary gamma{
-TH1F * leverarm_secondary_gamma = new TH1F("leverarm_secondary_gamma","lever arm of secondary_gamma",20,0,200);
-TH1F * angle_secondary_gamma = new TH1F("angle_secondary_gamma","angle between C and secondary_gamma hit",20,0,1);
-TH1F * beta_secondary_gamma = new TH1F("beta_secondary_gamma","beta of secondary_gamma",30,0,1.5);
-TH1F * distance_secondary_gamma = new TH1F("distance_secondary_gamma","distance b/w C and secondary_gamma hit",20,0,200);
-TH1F * TOF_secondary_gamma = new TH1F("TOF_secondary_gamma","time of flight of secondary_gamma", 25,0,25);
-TH1F * CubeE_secondary_gamma = new TH1F("CubeE_secondary_gamma", "CubeE of secondary_gamma", 30, 0, 15);
-TH1F * nCubeDis_secondary_gamma = new TH1F("nCubeDis_secondary_gamma","number of cubes, secondary gamma", 50, 0, 100);
-//}
-
-TH1F * timeWindow = new TH1F("timeWindow", "",250,0,25);
-TH2F * XYPlane = new TH2F("XY","XY;X;Y",240,-120,120,240,-120,120);
-TH2F * XZPlane = new TH2F("XZ","XZ;X;Z",240,-120,120,200,-100,100);
-TH2F * YZPlane = new TH2F("YZ","YZ;Y;Z",240,-120,120,200,-100,100);
-TH2F * cube_XYPlane = new TH2F("cube_XY","XY;X;Y",240,-120,120,240,-120,120);
-TH2F * cube_XZPlane = new TH2F("cube_XZ","XZ;X;Z",240,-120,120,200,-100,100);
-TH2F * cube_YZPlane = new TH2F("cube_YZ","YZ;Y;Z",240,-120,120,200,-100,100);
-TH2F * XYPlane_allhits = new TH2F("XY_allhits","XY;X;Y",240,-120,120,240,-120,120);
-TH2F * XZPlane_allhits = new TH2F("XZ_allhits","XZ;X;Z",240,-120,120,200,-100,100);
-TH2F * YZPlane_allhits = new TH2F("YZ_allhits","YZ;Y;Z",240,-120,120,200,-100,100);
 
 using namespace std;
 
 int main()
 {
+    float Z[3] = {0,0,1};
+    //
+    //signal{
+    TH1F * leverarm_signal = new TH1F("leverarm_signal","lever arm of signal",20,0,200);
+    TH1F * angle_signal = new TH1F("angle_signal","angle between C and signal hit",20,0,1);
+    TH1F * beta_signal = new TH1F("beta_signal","beta of signal",30,0,1.5);
+    TH1F * distance_signal = new TH1F("distance_signal","distance b/w C and signal hit",20,0,200);
+    TH1F * TOF_signal = new TH1F("TOF_signal","time of flight of signal", 25,0,25);
+    TH1F * CubeE_signal = new TH1F("CubeE_signal", "CubeE of signal", 30, 0, 15);
+    TH1F * nCubeDis_signal = new TH1F("nCubeDis_signal","number of cubes, signal", 50, 0, 100);
+    //}
+    //secondary neutron{ 
+    TH1F * leverarm_secondary_neutron = new TH1F("leverarm_secondary_neutron","lever arm of secondary_neutron",20,0,200);
+    TH1F * angle_secondary_neutron = new TH1F("angle_secondary_neutron","angle between C and secondary_neutron hit",20,0,1);
+    TH1F * beta_secondary_neutron = new TH1F("beta_secondary_neutron","beta of secondary_neutron",30,0,1.5);
+    TH1F * distance_secondary_neutron = new TH1F("distance_secondary_neutron","distance b/w C and secondary_neutron hit",20,0,200);
+    TH1F * TOF_secondary_neutron = new TH1F("TOF_secondary_neutron","time of flight of secondary_neutron", 25,0,25);
+    TH1F * CubeE_secondary_neutron = new TH1F("CubeE_secondary_neutron", "CubeE of secondary_neutron", 30, 0, 15);
+    TH1F * nCubeDis_secondary_neutron = new TH1F("nCubeDis_secondary_neutron","number of cubes, secondary neutron", 50, 0, 100);
+    //}
+
+    //primary gamma{
+    TH1F * leverarm_primary_gamma = new TH1F("leverarm_primary_gamma","lever arm of primary_gamma",20,0,200);
+    TH1F * angle_primary_gamma = new TH1F("angle_primary_gamma","angle between C and primary_gamma hit",20,0,1);
+    TH1F * beta_primary_gamma = new TH1F("beta_primary_gamma","beta of primary_gamma",30,0,1.5);
+    TH1F * distance_primary_gamma = new TH1F("distance_primary_gamma","distance b/w C and primary_gamma hit",20,0,200);
+    TH1F * TOF_primary_gamma = new TH1F("TOF_primary_gamma","time of flight of primary_gamma", 25,0,25);
+    TH1F * CubeE_primary_gamma = new TH1F("CubeE_primary_gamma", "CubeE of primary_gamma", 30, 0, 15);
+    TH1F * nCubeDis_primary_gamma = new TH1F("nCubeDis_primary_gamma","number of cubes, primary gamma", 50, 0, 100);
+    //}
+
+    //secondary gamma{
+    TH1F * leverarm_secondary_gamma = new TH1F("leverarm_secondary_gamma","lever arm of secondary_gamma",20,0,200);
+    TH1F * angle_secondary_gamma = new TH1F("angle_secondary_gamma","angle between C and secondary_gamma hit",20,0,1);
+    TH1F * beta_secondary_gamma = new TH1F("beta_secondary_gamma","beta of secondary_gamma",30,0,1.5);
+    TH1F * distance_secondary_gamma = new TH1F("distance_secondary_gamma","distance b/w C and secondary_gamma hit",20,0,200);
+    TH1F * TOF_secondary_gamma = new TH1F("TOF_secondary_gamma","time of flight of secondary_gamma", 25,0,25);
+    TH1F * CubeE_secondary_gamma = new TH1F("CubeE_secondary_gamma", "CubeE of secondary_gamma", 30, 0, 15);
+    TH1F * nCubeDis_secondary_gamma = new TH1F("nCubeDis_secondary_gamma","number of cubes, secondary gamma", 50, 0, 100);
+    //}
+
+    TH1F * timeWindow = new TH1F("timeWindow", "",250,0,25);
+    TH2F * XYPlane = new TH2F("XY","XY;X;Y",240,-120,120,240,-120,120);
+    TH2F * XZPlane = new TH2F("XZ","XZ;X;Z",240,-120,120,200,-100,100);
+    TH2F * YZPlane = new TH2F("YZ","YZ;Y;Z",240,-120,120,200,-100,100);
+    TH2F * cube_XYPlane = new TH2F("cube_XY","XY;X;Y",240,-120,120,240,-120,120);
+    TH2F * cube_XZPlane = new TH2F("cube_XZ","XZ;X;Z",240,-120,120,200,-100,100);
+    TH2F * cube_YZPlane = new TH2F("cube_YZ","YZ;Y;Z",240,-120,120,200,-100,100);
+    TH2F * XYPlane_allhits = new TH2F("XY_allhits","XY;X;Y",240,-120,120,240,-120,120);
+    TH2F * XZPlane_allhits = new TH2F("XZ_allhits","XZ;X;Z",240,-120,120,200,-100,100);
+    TH2F * YZPlane_allhits = new TH2F("YZ_allhits","YZ;Y;Z",240,-120,120,200,-100,100);
     float energyHitCut = 0.2; //energy deposit threshold for cube
     const double c_velocity = 29.9792458;
     //histograms{
@@ -195,12 +197,14 @@ int main()
     float neutronAngle; output_tree->Branch("neutronAngle", &neutronAngle, "neutronAngle");
     float nutrinoE; output_tree->Branch("neutrinoE", &neutrinoE, "neutrinoE");            
     float singleTransverseVariable; output_tree->Branch("singleTransverseVariable", &singleTransverseVariable, "singleTransverseVariable");
+    float muonAngle; output_tree->Branch("muonAngle", &muonAngle, "muonAngle");
+    float muonMomentum; output_tree->Branch("muonMomentum", &muonMomentum, "muonMomentum");
 
     for(int event = 0; event < tree.GetEntries(); event++)
     {
         tree.GetEntry(event);
 
-        cout<<"\033[1Aevent: "<<(double)(event*100/tree.GetEntries())<<"% ,"<<event<<"\033[1000D"<<endl;
+        cout<<"\033[1Aevent: "<<((double)event*100/tree.GetEntries())<<"%          \033[1000D"<<endl;
         leverArm = -1000;
         angle = -1000;
         beta = -1000;
@@ -215,6 +219,8 @@ int main()
         neutronAngle = -1000;
         nutrinoE = -1000;
         singleTransverseVariable = -1000;
+        muonAngle = -1000;
+        muonMomentum = -1000;
 
         //out of fiducial volume
         if(abs(t_vtx[0]) > 50 || abs(t_vtx[1]) > 50 || abs(t_vtx[2]) > 50)
@@ -244,7 +250,6 @@ int main()
             {
                 num_pi++;
             }
-
             if(abs(t_fsPdg[inFS]) == 2212)    //protonPDG=+-211
             {
                 num_proton++;
@@ -265,6 +270,32 @@ int main()
 
         if(!_1pi0p && !_0pi1p && !_0pi0p)
             continue;
+
+        float muon_mometum[3];
+        int num_muon = 0;
+        for(int inFS = 0; inFS < t_nFS; inFS++)
+        {
+            if(t_fsPdg[inFS] == -13)
+            {
+                muon_mometum[0] = t_fsPx[inFS];
+                muon_mometum[1] = t_fsPy[inFS];
+                muon_mometum[2] = t_fsPz[inFS];
+                num_muon++;
+            }
+        }
+        //if(num_muon > 1)
+        //{
+        //    for(int inFS = 0; inFS < t_nFS; inFS++)
+        //    {
+        //        std::cout<<"pdg: "<<t_fsPdg[inFS]<<endl;
+        //    }
+        //    cout<<"----------------------"<<endl;
+        //}
+        if(num_muon != 1)
+            continue;
+
+        muonAngle = GetAngle(Z,muon_mometum);
+        muonMomentum = sqrt(muon_mometum[0]*muon_mometum[0]+muon_mometum[1]*muon_mometum[1]+muon_mometum[2]*muon_mometum[2]);
 
         //        if(_0pi1p || _0pi0p)    //only looking for 1pi0p channel
         //            continue;
@@ -408,7 +439,6 @@ int main()
 
                 temp_gamma_Hit.SetTrueT(t_gammaHitT[n_gammaHit]);
                 temp_gamma_Hit.SetCubeE(t_gammaCubeE[n_gammaHit]);
-
 
                 temp_gamma_Hit.SetParentId(t_gammaParentId[n_gammaHit]);
                 temp_gamma_Hit.parentPdg = t_gammaParentPDG[n_gammaHit];
@@ -606,7 +636,6 @@ int main()
             }
         }
 
-        float Z[3] = {0,0,1};
         float vec_vtx_to_hit[3];
         vec_vtx_to_hit[0] = earliest_hit.GetX() - earliest_hit.GetVtxX();
         vec_vtx_to_hit[1] = earliest_hit.GetY() - earliest_hit.GetVtxY();
@@ -765,6 +794,11 @@ int main()
         {
             Px += t_fsPx[inFS];
             Py += t_fsPy[inFS];
+        }
+        if(isinf(beta))
+        {
+            //cout<<"inf beta"<<endl;
+            beta = -1000;
         }
         singleTransverseVariable = sqrt(Px*Px+Py*Py);
         neutrinoE = t_nuEnergy;

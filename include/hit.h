@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 #include <thread>
+#include <float.h>
 
 #include "TChain.h"
 #include "Riostream.h"
