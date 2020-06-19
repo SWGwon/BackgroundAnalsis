@@ -806,10 +806,10 @@ int main()
                 angle = -1000;
                 distanceCHit = -1000;
             }
-            beta_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
-            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
-            TOF_secondary_gamma->Fill(earliest_hit.GetTOF());
-            tof = earliest_hit.GetTOF();
+            beta_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
+            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
+            TOF_secondary_gamma->Fill(earliest_hit.GetTOFSmear());
+            tof = earliest_hit.GetTOFSmear();
             CubeE_secondary_gamma->Fill(earliest_hit.GetCubeE());
             cubeE = earliest_hit.GetCubeE();
             nCubeDis_secondary_gamma->Fill(cube_cluster.size());
