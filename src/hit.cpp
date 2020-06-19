@@ -182,4 +182,12 @@ float Hit::GetCategory()
 {
     return this->category;
 }
-
+////////////////////////////////////////////////////////////////////////
+void Hit::SetPDG(float pdg)
+{
+    this->hitPDG = pdg;
+}
+float Hit::GetPDG()
+{
+    return this->hitPDG;
+}

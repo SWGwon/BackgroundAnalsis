@@ -6,6 +6,7 @@ using namespace std;
 
 int main()
 {
+    gErrorIgnoreLevel = 6000;
     float Z[3] = {0,0,1};
     //
     //signal{
@@ -57,12 +58,13 @@ int main()
     TH2F * XYPlane_allhits = new TH2F("XY_allhits","XY;X;Y",240,-120,120,240,-120,120);
     TH2F * XZPlane_allhits = new TH2F("XZ_allhits","XZ;X;Z",240,-120,120,200,-100,100);
     TH2F * YZPlane_allhits = new TH2F("YZ_allhits","YZ;Y;Z",240,-120,120,200,-100,100);
+
+    TH1F * secondary_gamma_parentID = new TH1F("","",200,-100,100);
     float energyHitCut = 0.2; //energy deposit threshold for cube
     const double c_velocity = 29.9792458;
     //histograms{
 
     //}
-    gErrorIgnoreLevel = kWarning;
 
     int filenum;
     cout<<"filenum :"<<endl;
@@ -173,16 +175,11 @@ int main()
     float t_hitT[1000]; tree.SetBranchAddress("hitT",&t_hitT);
     float t_nuEnergy; tree.SetBranchAddress("nuEnergy",&t_nuEnergy);
 
-    cout<<"file loading is done"<<endl;
-    cout<<"---------------------------"<<endl;
-    cout<<"total entries: "<<tree.GetEntries()<<endl;
-    cout<<"event loop starts"<<endl;
-    cout<<endl;
-
     TFile * outfile = new TFile("variables.root","RECREATE");
     TTree * output_tree = new TTree("output_tree", "output_tree");
 
     //variable for output root file
+    float channel; output_tree->Branch("channel",&channel,"channel 0pi0P_0 0pi_1 1P_2");
     float leverArm; output_tree->Branch("leverArm",&leverArm, "lever arm");
     float angle; output_tree->Branch("angle",&angle, "angle between C and hit");
     float beta; output_tree->Branch("beta",&beta, "beta");
@@ -195,16 +192,25 @@ int main()
     float hitPDG; output_tree->Branch("hitPDG", &hitPDG, "hitPDG");
     float neutronE; output_tree->Branch("neutronE", &neutronE, "neutronE");
     float neutronAngle; output_tree->Branch("neutronAngle", &neutronAngle, "neutronAngle");
-    float nutrinoE; output_tree->Branch("neutrinoE", &neutrinoE, "neutrinoE");            
-    float singleTransverseVariable; output_tree->Branch("singleTransverseVariable", &singleTransverseVariable, "singleTransverseVariable");
+    float singleTransverseVariable_1pi; output_tree->Branch("singleTransverseVariable_1pi", &singleTransverseVariable_1pi, "singleTransverseVariable_1pi");
+    float singleTransverseVariable_1P; output_tree->Branch("singleTransverseVariable_1P", &singleTransverseVariable_1P, "singleTransverseVariable_1P");
+    float singleTransverseVariable_0pi0P; output_tree->Branch("singleTransverseVariable_0pi0P", &singleTransverseVariable_0pi0P, "singleTransverseVariable_0pi0P");
     float muonAngle; output_tree->Branch("muonAngle", &muonAngle, "muonAngle");
     float muonMomentum; output_tree->Branch("muonMomentum", &muonMomentum, "muonMomentum");
+    float Q2; output_tree->Branch("Q2",&Q2,"Q2");
+
+    cout<<"file loading is done"<<endl;
+    cout<<"---------------------------"<<endl;
+    cout<<"total entries: "<<tree.GetEntries()<<endl;
+    cout<<"event loop starts"<<endl;
+    cout<<endl;
 
     for(int event = 0; event < tree.GetEntries(); event++)
     {
         tree.GetEntry(event);
 
         cout<<"\033[1Aevent: "<<((double)event*100/tree.GetEntries())<<"%          \033[1000D"<<endl;
+        channel = -1000;
         leverArm = -1000;
         angle = -1000;
         beta = -1000;
@@ -217,10 +223,12 @@ int main()
         hitPDG = -1000;
         neutronE = -1000;
         neutronAngle = -1000;
-        nutrinoE = -1000;
-        singleTransverseVariable = -1000;
+        singleTransverseVariable_1P = -1000;
+        singleTransverseVariable_1pi = -1000;
+        singleTransverseVariable_0pi0P = -1000;
         muonAngle = -1000;
         muonMomentum = -1000;
+        Q2 = -1000;
 
         //out of fiducial volume
         if(abs(t_vtx[0]) > 50 || abs(t_vtx[1]) > 50 || abs(t_vtx[2]) > 50)
@@ -244,13 +252,18 @@ int main()
         //count # of charged pion,proton in FS
         int num_pi = 0;
         int num_proton = 0;
+        int num_pi0 = 0;
         for(int inFS = 0; inFS < t_nFS; inFS++)
         {
+            if(abs(t_fsPdg[inFS]) == 111)    //pion0PDG=111
+            {
+                num_pi0++;
+            }
             if(abs(t_fsPdg[inFS]) == 211)    //pionPDG=+-211
             {
                 num_pi++;
             }
-            if(abs(t_fsPdg[inFS]) == 2212)    //protonPDG=+-211
+            if(t_fsPdg[inFS] == 2212)    //protonPDG=+-211
             {
                 num_proton++;
             }
@@ -262,17 +275,30 @@ int main()
         bool _0pi0p = false;
 
         if(num_pi == 1 && num_proton == 0)
+        {
             _1pi0p = true;
+            channel = 1;
+        }
         if(num_pi == 0 && num_proton == 1)
+        {
             _0pi1p = true;
+            channel = 2;
+        }
         if(num_pi == 0 && num_proton == 0)
+        {
             _0pi0p = true;
+            channel = 0;
+        }
 
         if(!_1pi0p && !_0pi1p && !_0pi0p)
             continue;
 
+        if(num_pi0 != 0)
+            continue;
+
         float muon_mometum[3];
         int num_muon = 0;
+        float muonE;
         for(int inFS = 0; inFS < t_nFS; inFS++)
         {
             if(t_fsPdg[inFS] == -13)
@@ -280,6 +306,7 @@ int main()
                 muon_mometum[0] = t_fsPx[inFS];
                 muon_mometum[1] = t_fsPy[inFS];
                 muon_mometum[2] = t_fsPz[inFS];
+                muonE = t_fsE[inFS];
                 num_muon++;
             }
         }
@@ -331,6 +358,7 @@ int main()
             //calculate signal window; time of flight
             float tof = t_neutronHitT[n_neutronHit] - t_vtxTime - 1;
             float tofSmear = t_neutronHitSmearT[n_neutronHit] - t_vtxTime - 1;
+            //float tofSmear = tof + gRandom->Uniform(-0.5,0.5);
 
             //Fix a bug from edep-sim
             if(tof == 1)
@@ -413,6 +441,7 @@ int main()
             //calculate signal window; time of flight
             float tof = t_gammaHitT[n_gammaHit] - t_vtxTime - 1;
             float tofSmear = t_gammaHitSmearT[n_gammaHit] - t_vtxTime - 1;
+            //float tofSmear = tof + gRandom->Uniform(-0.5,0.5);
 
             //Fix a bug from edep-sim
             if(tof == 1)
@@ -777,15 +806,16 @@ int main()
                 angle = -1000;
                 distanceCHit = -1000;
             }
-            beta_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
-            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
-            TOF_secondary_gamma->Fill(earliest_hit.GetTOFSmear());
-            tof = earliest_hit.GetTOFSmear();
+            beta_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
+            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
+            TOF_secondary_gamma->Fill(earliest_hit.GetTOF());
+            tof = earliest_hit.GetTOF();
             CubeE_secondary_gamma->Fill(earliest_hit.GetCubeE());
             cubeE = earliest_hit.GetCubeE();
             nCubeDis_secondary_gamma->Fill(cube_cluster.size());
             nCube = cube_cluster.size();
             hitPDG = earliest_hit.GetHitPDG();
+            secondary_gamma_parentID->Fill(earliest_hit.GetPDG());
         }
         //transverse momentum
         float Px = 0;
@@ -800,8 +830,14 @@ int main()
             //cout<<"inf beta"<<endl;
             beta = -1000;
         }
-        singleTransverseVariable = sqrt(Px*Px+Py*Py);
+        if(_1pi0p)
+            singleTransverseVariable_1pi = sqrt(Px*Px+Py*Py);
+        if(_0pi1p)
+            singleTransverseVariable_1P = sqrt(Px*Px+Py*Py);
+        if(_0pi0p)
+            singleTransverseVariable_0pi0P = sqrt(Px*Px+Py*Py);
         neutrinoE = t_nuEnergy;
+        Q2 = 4*neutrinoE*muonE*0.001*pow(TMath::Sin(TMath::Pi()*muonAngle/2),2);
         category = earliest_hit.GetCategory();
         output_tree->Fill();
 
@@ -817,23 +853,49 @@ int main()
     TFile * fi1 = new TFile("background.root","RECREATE");
     gStyle->SetFrameFillColor(0);
 
+    Font_t ft = 132;
+    gStyle->SetLabelSize(50,"XY");
+    gStyle->SetTitleSize(50,"XY");
+    //gStyle->SetLegendSize(5);
+
     TCanvas * can = new TCanvas;
 
-    TLegend * legend = new TLegend(0.33,0.8,0.66,0.9);
+    TLegend * legend = new TLegend(0.5,0.6,0.9,0.9);
+    legend->SetHeader("DUNE: Simulation","C");
     legend->AddEntry(leverarm_signal,"signal","l");
     legend->AddEntry(leverarm_secondary_neutron,"secondary neutron","l");
     legend->AddEntry(leverarm_primary_gamma,"primary gamma","l");
     legend->AddEntry(leverarm_secondary_gamma,"secondary gamma","l");
+    legend->SetTextSize(0.055);
+
+    TLegend * legend1 = new TLegend(0.1,0.6,0.5,0.9);
+    legend1->SetHeader("DUNE: Simulation","C");
+    legend1->AddEntry(leverarm_signal,"signal","l");
+    legend1->AddEntry(leverarm_secondary_neutron,"secondary neutron","l");
+    legend1->AddEntry(leverarm_primary_gamma,"primary gamma","l");
+    legend1->AddEntry(leverarm_secondary_gamma,"secondary gamma","l");
+    legend1->SetTextSize(0.055);
+
     /*
      * 2: red, signal
      * 4: blue, secondary neutron
      * 6: purple, primary gamma
-     * 8: green, secondary gamma
+     * 1: black, secondary gamma
      */
 
     //leaverarm{
     leverarm_signal->Write();
+    leverarm_signal->GetXaxis()->SetTitle("[cm]");
+    leverarm_signal->GetYaxis()->SetTitle("Normalized fraction");
+    leverarm_signal->GetYaxis()->CenterTitle(1);
+    leverarm_signal->GetXaxis()->SetLabelSize(0.045);
+    leverarm_signal->GetYaxis()->SetLabelSize(0.045);
+    leverarm_signal->GetXaxis()->SetTitleSize(0.060);
+    leverarm_signal->GetYaxis()->SetTitleSize(0.055);
+    leverarm_signal->GetYaxis()->SetTitleOffset(0.9);
+    leverarm_signal->GetXaxis()->SetTitleOffset(0.70);
     leverarm_signal->SetLineColor(2);
+    leverarm_signal->SetLineWidth(3);
     leverarm_signal->SetStats(0);
     leverarm_signal->Scale(1/leverarm_signal->Integral(),"nosw2");
     leverarm_signal->GetXaxis()->SetTitle("cm");
@@ -843,18 +905,21 @@ int main()
 
     leverarm_secondary_neutron->Write();
     leverarm_secondary_neutron->SetLineColor(4);
+    leverarm_secondary_neutron->SetLineWidth(3);
     leverarm_secondary_neutron->SetStats(0);
     leverarm_secondary_neutron->Scale(1/leverarm_secondary_neutron->Integral(),"nosw2");
     leverarm_secondary_neutron->Draw("same");
 
     leverarm_primary_gamma->Write();
     leverarm_primary_gamma->SetLineColor(6);
+    leverarm_primary_gamma->SetLineWidth(3);
     leverarm_primary_gamma->SetStats(0);
     leverarm_primary_gamma->Scale(1/leverarm_primary_gamma->Integral(),"nosw2");
     leverarm_primary_gamma->Draw("same");
 
     leverarm_secondary_gamma->Write();
-    leverarm_secondary_gamma->SetLineColor(8);
+    leverarm_secondary_gamma->SetLineColor(1);
+    leverarm_secondary_gamma->SetLineWidth(3);
     leverarm_secondary_gamma->SetStats(0);
     leverarm_secondary_gamma->Scale(1/leverarm_secondary_gamma->Integral(),"nosw2");
     leverarm_secondary_gamma->Draw("same");
@@ -866,7 +931,17 @@ int main()
 
     //angle{
     angle_signal->Write();
+    angle_signal->GetXaxis()->SetTitle("[π]");
+    angle_signal->GetYaxis()->SetTitle("Normalized fraction");
+    angle_signal->GetYaxis()->CenterTitle(1);
+    angle_signal->GetXaxis()->SetLabelSize(0.045);
+    angle_signal->GetYaxis()->SetLabelSize(0.045);
+    angle_signal->GetXaxis()->SetTitleSize(0.060);
+    angle_signal->GetYaxis()->SetTitleSize(0.055);
+    angle_signal->GetYaxis()->SetTitleOffset(0.9);
+    angle_signal->GetXaxis()->SetTitleOffset(0.70);
     angle_signal->SetLineColor(2);
+    angle_signal->SetLineWidth(3);
     angle_signal->SetStats(0);
     angle_signal->Scale(1/angle_signal->Integral(),"nosw2");
     angle_signal->GetXaxis()->SetTitle("pi");
@@ -876,30 +951,43 @@ int main()
 
     angle_secondary_neutron->Write();
     angle_secondary_neutron->SetLineColor(4);
+    angle_secondary_neutron->SetLineWidth(3);
     angle_secondary_neutron->SetStats(0);
     angle_secondary_neutron->Scale(1/angle_secondary_neutron->Integral(),"nosw2");
     angle_secondary_neutron->Draw("same");
 
     angle_primary_gamma->Write();
     angle_primary_gamma->SetLineColor(6);
+    angle_primary_gamma->SetLineWidth(3);
     angle_primary_gamma->SetStats(0);
     angle_primary_gamma->Scale(1/angle_primary_gamma->Integral(),"nosw2");
     angle_primary_gamma->Draw("same");
 
     angle_secondary_gamma->Write();
-    angle_secondary_gamma->SetLineColor(8);
+    angle_secondary_gamma->SetLineColor(1);
+    angle_secondary_gamma->SetLineWidth(3);
     angle_secondary_gamma->SetStats(0);
     angle_secondary_gamma->Scale(1/angle_secondary_gamma->Integral(),"nosw2");
     angle_secondary_gamma->Draw("same");
 
-    legend->Draw();
+    legend1->Draw();
     can->SaveAs("angle.pdf");
     can->Clear();
     //}
 
     //beta{
     beta_signal->Write();
+    beta_signal->GetXaxis()->SetTitle("speed of particle/c");
+    beta_signal->GetYaxis()->SetTitle("Normalized fraction");
+    beta_signal->GetYaxis()->CenterTitle(1);
+    beta_signal->GetXaxis()->SetLabelSize(0.045);
+    beta_signal->GetYaxis()->SetLabelSize(0.045);
+    beta_signal->GetXaxis()->SetTitleSize(0.060);
+    beta_signal->GetYaxis()->SetTitleSize(0.055);
+    beta_signal->GetYaxis()->SetTitleOffset(0.9);
+    beta_signal->GetXaxis()->SetTitleOffset(0.70);
     beta_signal->SetLineColor(2);
+    beta_signal->SetLineWidth(3);
     beta_signal->SetStats(0);
     beta_signal->Scale(1/beta_signal->Integral(),"nosw2");
     beta_signal->GetXaxis()->SetTitle("speed of particle/c");
@@ -909,30 +997,43 @@ int main()
 
     beta_secondary_neutron->Write();
     beta_secondary_neutron->SetLineColor(4);
+    beta_secondary_neutron->SetLineWidth(3);
     beta_secondary_neutron->SetStats(0);
     beta_secondary_neutron->Scale(1/beta_secondary_neutron->Integral(),"nosw2");
     beta_secondary_neutron->Draw("same");
 
     beta_primary_gamma->Write();
     beta_primary_gamma->SetLineColor(6);
+    beta_primary_gamma->SetLineWidth(3);
     beta_primary_gamma->SetStats(0);
     beta_primary_gamma->Scale(1/beta_primary_gamma->Integral(),"nosw2");
     beta_primary_gamma->Draw("same");
 
     beta_secondary_gamma->Write();
-    beta_secondary_gamma->SetLineColor(8);
+    beta_secondary_gamma->SetLineColor(1);
+    beta_secondary_gamma->SetLineWidth(3);
     beta_secondary_gamma->SetStats(0);
     beta_secondary_gamma->Scale(1/beta_secondary_gamma->Integral(),"nosw2");
     beta_secondary_gamma->Draw("same");
 
-    legend->Draw();
+    legend1->Draw();
     can->SaveAs("beta.pdf");
     can->Clear();
     //}
 
     //distance{
     distance_signal->Write();
+    distance_signal->GetXaxis()->SetTitle("[cm]");
+    distance_signal->GetYaxis()->SetTitle("Normalized fraction");
+    distance_signal->GetYaxis()->CenterTitle(1);
+    distance_signal->GetXaxis()->SetLabelSize(0.045);
+    distance_signal->GetYaxis()->SetLabelSize(0.045);
+    distance_signal->GetXaxis()->SetTitleSize(0.060);
+    distance_signal->GetYaxis()->SetTitleSize(0.055);
+    distance_signal->GetYaxis()->SetTitleOffset(0.9);
+    distance_signal->GetXaxis()->SetTitleOffset(0.70);
     distance_signal->SetLineColor(2);
+    distance_signal->SetLineWidth(3);
     distance_signal->SetStats(0);
     distance_signal->Scale(1/distance_signal->Integral(),"nosw2");
     distance_signal->GetXaxis()->SetTitle("cm");
@@ -942,18 +1043,21 @@ int main()
 
     distance_secondary_neutron->Write();
     distance_secondary_neutron->SetLineColor(4);
+    distance_secondary_neutron->SetLineWidth(3);
     distance_secondary_neutron->SetStats(0);
     distance_secondary_neutron->Scale(1/distance_secondary_neutron->Integral(),"nosw2");
     distance_secondary_neutron->Draw("same");
 
     distance_primary_gamma->Write();
     distance_primary_gamma->SetLineColor(6);
+    distance_primary_gamma->SetLineWidth(3);
     distance_primary_gamma->SetStats(0);
     distance_primary_gamma->Scale(1/distance_primary_gamma->Integral(),"nosw2");
     distance_primary_gamma->Draw("same");
 
     distance_secondary_gamma->Write();
-    distance_secondary_gamma->SetLineColor(8);
+    distance_secondary_gamma->SetLineColor(1);
+    distance_secondary_gamma->SetLineWidth(3);
     distance_secondary_gamma->SetStats(0);
     distance_secondary_gamma->Scale(1/distance_secondary_gamma->Integral(),"nosw2");
     distance_secondary_gamma->Draw("same");
@@ -965,7 +1069,17 @@ int main()
 
     //TOF{
     TOF_signal->Write();
+    TOF_signal->GetXaxis()->SetTitle("[ns]");
+    TOF_signal->GetYaxis()->SetTitle("Normalized fraction");
+    TOF_signal->GetYaxis()->CenterTitle(1);
+    TOF_signal->GetXaxis()->SetLabelSize(0.045);
+    TOF_signal->GetYaxis()->SetLabelSize(0.045);
+    TOF_signal->GetXaxis()->SetTitleSize(0.060);
+    TOF_signal->GetYaxis()->SetTitleSize(0.055);
+    TOF_signal->GetYaxis()->SetTitleOffset(0.9);
+    TOF_signal->GetXaxis()->SetTitleOffset(0.70);
     TOF_signal->SetLineColor(2);
+    TOF_signal->SetLineWidth(3);
     TOF_signal->SetStats(0);
     TOF_signal->Scale(1/TOF_signal->Integral(),"nosw2");
     TOF_signal->GetXaxis()->SetTitle("ns");
@@ -975,18 +1089,21 @@ int main()
 
     TOF_secondary_neutron->Write();
     TOF_secondary_neutron->SetLineColor(4);
+    TOF_secondary_neutron->SetLineWidth(3);
     TOF_secondary_neutron->SetStats(0);
     TOF_secondary_neutron->Scale(1/TOF_secondary_neutron->Integral(),"nosw2");
     TOF_secondary_neutron->Draw("same");
 
     TOF_primary_gamma->Write();
     TOF_primary_gamma->SetLineColor(6);
+    TOF_primary_gamma->SetLineWidth(3);
     TOF_primary_gamma->SetStats(0);
     TOF_primary_gamma->Scale(1/TOF_primary_gamma->Integral(),"nosw2");
     TOF_primary_gamma->Draw("same");
 
     TOF_secondary_gamma->Write();
-    TOF_secondary_gamma->SetLineColor(8);
+    TOF_secondary_gamma->SetLineColor(1);
+    TOF_secondary_gamma->SetLineWidth(3);
     TOF_secondary_gamma->SetStats(0);
     TOF_secondary_gamma->Scale(1/TOF_secondary_gamma->Integral(),"nosw2");
     TOF_secondary_gamma->Draw("same");
@@ -998,7 +1115,17 @@ int main()
 
     //CubeE{
     CubeE_signal->Write();
+    CubeE_signal->GetXaxis()->SetTitle("[MeV]");
+    CubeE_signal->GetYaxis()->SetTitle("Normalized fraction");
+    CubeE_signal->GetYaxis()->CenterTitle(1);
+    CubeE_signal->GetXaxis()->SetLabelSize(0.045);
+    CubeE_signal->GetYaxis()->SetLabelSize(0.045);
+    CubeE_signal->GetXaxis()->SetTitleSize(0.060);
+    CubeE_signal->GetYaxis()->SetTitleSize(0.055);
+    CubeE_signal->GetYaxis()->SetTitleOffset(0.9);
+    CubeE_signal->GetXaxis()->SetTitleOffset(0.70);
     CubeE_signal->SetLineColor(2);
+    CubeE_signal->SetLineWidth(3);
     CubeE_signal->SetStats(0);
     CubeE_signal->Scale(1/CubeE_signal->Integral(),"nosw2");
     CubeE_signal->GetXaxis()->SetTitle("MeV");
@@ -1008,18 +1135,21 @@ int main()
 
     CubeE_secondary_neutron->Write();
     CubeE_secondary_neutron->SetLineColor(4);
+    CubeE_secondary_neutron->SetLineWidth(3);
     CubeE_secondary_neutron->SetStats(0);
     CubeE_secondary_neutron->Scale(1/CubeE_secondary_neutron->Integral(),"nosw2");
     CubeE_secondary_neutron->Draw("same");
 
     CubeE_primary_gamma->Write();
     CubeE_primary_gamma->SetLineColor(6);
+    CubeE_primary_gamma->SetLineWidth(3);
     CubeE_primary_gamma->SetStats(0);
     CubeE_primary_gamma->Scale(1/CubeE_primary_gamma->Integral(),"nosw2");
     CubeE_primary_gamma->Draw("same");
 
     CubeE_secondary_gamma->Write();
-    CubeE_secondary_gamma->SetLineColor(8);
+    CubeE_secondary_gamma->SetLineColor(1);
+    CubeE_secondary_gamma->SetLineWidth(3);
     CubeE_secondary_gamma->SetStats(0);
     CubeE_secondary_gamma->Scale(1/CubeE_secondary_gamma->Integral(),"nosw2");
     CubeE_secondary_gamma->Draw("same");
@@ -1031,8 +1161,19 @@ int main()
 
     //nCube{
     nCubeDis_signal->Write();
+    nCubeDis_signal->GetXaxis()->SetTitle("number of fired cube");
+    nCubeDis_signal->GetYaxis()->SetTitle("Normalized fraction");
+    nCubeDis_signal->GetYaxis()->CenterTitle(1);
+    nCubeDis_signal->GetXaxis()->SetLabelSize(0.045);
+    nCubeDis_signal->GetYaxis()->SetLabelSize(0.045);
+    nCubeDis_signal->GetXaxis()->SetTitleSize(0.060);
+    nCubeDis_signal->GetYaxis()->SetTitleSize(0.055);
+    nCubeDis_signal->GetYaxis()->SetTitleOffset(0.9);
+    nCubeDis_signal->GetXaxis()->SetTitleOffset(0.70);
     nCubeDis_signal->GetYaxis()->SetRangeUser(0,0.5);
     nCubeDis_signal->SetLineColor(2);
+    nCubeDis_signal->SetLineColor(2);
+    nCubeDis_signal->SetLineWidth(3);
     nCubeDis_signal->SetStats(0);
     nCubeDis_signal->Scale(1/nCubeDis_signal->Integral(),"nosw2");
     nCubeDis_signal->GetXaxis()->SetTitle("number of fired cubes");
@@ -1042,18 +1183,24 @@ int main()
 
     nCubeDis_secondary_neutron->Write();
     nCubeDis_secondary_neutron->SetLineColor(4);
+    nCubeDis_secondary_neutron->SetLineColor(4);
+    nCubeDis_secondary_neutron->SetLineWidth(3);
     nCubeDis_secondary_neutron->SetStats(0);
     nCubeDis_secondary_neutron->Scale(1/nCubeDis_secondary_neutron->Integral(),"nosw2");
     nCubeDis_secondary_neutron->Draw("same");
 
     nCubeDis_primary_gamma->Write();
     nCubeDis_primary_gamma->SetLineColor(6);
+    nCubeDis_primary_gamma->SetLineColor(6);
+    nCubeDis_primary_gamma->SetLineWidth(3);
     nCubeDis_primary_gamma->SetStats(0);
     nCubeDis_primary_gamma->Scale(1/nCubeDis_primary_gamma->Integral(),"nosw2");
     nCubeDis_primary_gamma->Draw("same");
 
     nCubeDis_secondary_gamma->Write();
-    nCubeDis_secondary_gamma->SetLineColor(8);
+    nCubeDis_secondary_gamma->SetLineColor(1);
+    nCubeDis_secondary_gamma->SetLineColor(1);
+    nCubeDis_secondary_gamma->SetLineWidth(3);
     nCubeDis_secondary_gamma->SetStats(0);
     nCubeDis_secondary_gamma->Scale(1/nCubeDis_secondary_gamma->Integral(),"nosw2");
     nCubeDis_secondary_gamma->Draw("same");
@@ -1063,6 +1210,9 @@ int main()
     can->Clear();
     //}
 
+    secondary_gamma_parentID->Draw();
+    can->SaveAs("secondary_gamma_parentID.pdf");
+    can->Clear();
     fi1->Close();
 
     cout<<"making output files is done"<<endl;

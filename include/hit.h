@@ -137,6 +137,9 @@ class Hit
         void SetCategory(float category);
         float GetCategory();
 ////////////////////////////////////////////////////////
+        void SetPDG(float pdg);
+        float GetPDG();
+////////////////////////////////////////////////////////
         float piDeath[3];      //pion death
         float protonDeath[3];      //proton Death
 

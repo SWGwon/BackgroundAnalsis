@@ -124,7 +124,7 @@ int TMVAClassification_3DSTneutron( TString myMethodList = "" )
    TFile *inputTest(0);
 
    //TString fname  = "/Users/gwon/bkg/test/test/proton/variables.root";
-   TString fname   = "/Users/gwon/BackgroundAnalysis/output/variables.root";
+   TString fname   = "./variables.root";
 
    if (!gSystem->AccessPathName( fname )) {
       input = TFile::Open( fname ); // check if file in local directory exists
@@ -178,23 +178,29 @@ int TMVAClassification_3DSTneutron( TString myMethodList = "" )
    // note that you may also use variable expressions, such as: "3*var1/var2*abs(var3)"
    // [all types of expressions that can also be parsed by TTree::Draw( "expression" )]
 
-   dataloader->AddVariable( "var1:=leverArm", "leverArm", "units",  'F' );
-   dataloader->AddVariable( "var2:=angle", "angle", "units", 'F' );
-   dataloader->AddVariable( "var3:=beta", "beta", "units", 'F' );
-   dataloader->AddVariable( "var4:=distanceCHit", "distanceCHit", "units", 'F' );
-   dataloader->AddVariable( "var5:=tof", "tof", "units", 'F' );
-   dataloader->AddVariable( "var6:=cubeE", "cubeE", "units", 'F' );
-   dataloader->AddVariable( "var7:=nCube", "nCube", "units", 'F' );     //what I added
+   dataloader->AddVariable( "leverArm:=leverArm", "leverArm", "units",  'F' );
+   dataloader->AddVariable( "angle:=angle", "angle", "units", 'F' );
+   dataloader->AddVariable( "beta:=beta", "beta", "units", 'F' );
+   dataloader->AddVariable( "distanceCHit:=distanceCHit", "distanceCHit", "units", 'F' );
+   dataloader->AddVariable( "tof:=tof", "tof", "units", 'F' );
+   dataloader->AddVariable( "cubeE:=cubeE", "cubeE", "units", 'F' );
+   dataloader->AddVariable( "nCube:=nCube", "nCube", "units", 'F' );     //what I added
 
    // You can add so-called "Spectator variables", which are not used in the MVA training,
    // but will appear in the final "TestTree" produced by TMVA. This TestTree will contain the
    // input variables, the response values of all trained MVAs, and the spectator variables
 
-   dataloader->AddSpectator( "var8:=neutronE",  "neutronE", "units", 'F' );
-   dataloader->AddSpectator( "var9:=neutronAngle",  "neutronAngle", "units", 'F' );
-   dataloader->AddSpectator( "var10:=singleTransverseVariable",  "singleTransverseVariable", "units", 'F' );
-   dataloader->AddSpectator( "var11:=muonAngle",  "muonAngle", "units", 'F' );
-   dataloader->AddSpectator( "var12:=muonMomentum",  "muonMomentum", "units", 'F' );
+   dataloader->AddSpectator( "neutronE:=neutronE",  "neutronE", "units", 'F' );
+   dataloader->AddSpectator( "neutronAngle:=neutronAngle",  "neutronAngle", "units", 'F' );
+   dataloader->AddSpectator( "muonAngle:=muonAngle",  "muonAngle", "units", 'F' );
+   dataloader->AddSpectator( "muonMomentum:=muonMomentum",  "muonMomentum", "units", 'F' );
+   dataloader->AddSpectator( "muonMomentum:=muonMomentum",  "muonMomentum", "units", 'F' );
+   dataloader->AddSpectator( "singleTransverseVariable_1pi:=singleTransverseVariable_1pi",  "singleTransverseVariable_1pi", "units", 'F' );
+   dataloader->AddSpectator( "singleTransverseVariable_1P:=singleTransverseVariable_1P",  "singleTransverseVariable_1P", "units", 'F' );
+   dataloader->AddSpectator( "singleTransverseVariable_0pi0P:=singleTransverseVariable_0pi0P",  "singleTransverseVariable_0pi0P", "units", 'F' );
+   dataloader->AddSpectator( "neutrinoE:=neutrinoE",  "neutrinoE", "units", 'F' );
+   dataloader->AddSpectator( "Q2:=Q2",  "Q2", "units", 'F' );
+   dataloader->AddSpectator( "channel:=channel",  "channel", "units", 'F' );
 
    // global event weights per tree (see below for setting event-wise weights)
    Double_t signalWeight     = 1.0;
@@ -214,7 +220,7 @@ int TMVAClassification_3DSTneutron( TString myMethodList = "" )
    //
    // If no numbers of events are given, half of the events in the tree are used
    // for training, and the other half for testing:
-   dataloader->PrepareTrainingAndTestTree( mycuts, mycutb,"nTest_Signal=40000:nTest_Background=40000:SplitMode=Random:NormMode=NumEvents:!V" );
+   dataloader->PrepareTrainingAndTestTree( mycuts, mycutb,"SplitMode=Random:!V" );
                                         //"nTrain_Signal=1000:nTrain_Background=1000:SplitMode=Random:NormMode=NumEvents:!V" );
 
 
