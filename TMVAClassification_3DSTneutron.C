@@ -201,6 +201,8 @@ int TMVAClassification_3DSTneutron( TString myMethodList = "" )
    dataloader->AddSpectator( "neutrinoE:=neutrinoE",  "neutrinoE", "units", 'F' );
    dataloader->AddSpectator( "Q2:=Q2",  "Q2", "units", 'F' );
    dataloader->AddSpectator( "channel:=channel",  "channel", "units", 'F' );
+   dataloader->AddSpectator( "protonMomentum:=protonMomentum",  "protonMomentum", "units", 'F' );
+   dataloader->AddSpectator( "pionMomentum:=pionMomentum",  "pionMomentum", "units", 'F' );
 
    // global event weights per tree (see below for setting event-wise weights)
    Double_t signalWeight     = 1.0;

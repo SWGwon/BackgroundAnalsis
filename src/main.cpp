@@ -198,6 +198,10 @@ int main()
     float muonAngle; output_tree->Branch("muonAngle", &muonAngle, "muonAngle");
     float muonMomentum; output_tree->Branch("muonMomentum", &muonMomentum, "muonMomentum");
     float Q2; output_tree->Branch("Q2",&Q2,"Q2");
+    float neutronE_allhits; output_tree->Branch("neutronE_allhits", &neutronE_allhits, "neutronE_allhits");
+    float protonMomentum; output_tree->Branch("protonMomentum", &protonMomentum, "protonMomentum");
+    float pionMomentum; output_tree->Branch("pionMomentum", &pionMomentum, "pionMomentum");
+    float neutronE_deposit[1000]; output_tree->Branch("neutronE_deposit", &neutronE_deposit, "neutronE_deposit");
 
     cout<<"file loading is done"<<endl;
     cout<<"---------------------------"<<endl;
@@ -229,6 +233,9 @@ int main()
         muonAngle = -1000;
         muonMomentum = -1000;
         Q2 = -1000;
+        neutronE_allhits = 0;
+        protonMomentum = -1000;
+        pionMomentum = -1000;
 
         //out of fiducial volume
         if(abs(t_vtx[0]) > 50 || abs(t_vtx[1]) > 50 || abs(t_vtx[2]) > 50)
@@ -296,18 +303,32 @@ int main()
         if(num_pi0 != 0)
             continue;
 
-        float muon_mometum[3];
+        float muon_momentum[3];
+        float proton_momentum[3];
+        float pion_momentum[3];
         int num_muon = 0;
         float muonE;
         for(int inFS = 0; inFS < t_nFS; inFS++)
         {
             if(t_fsPdg[inFS] == -13)
             {
-                muon_mometum[0] = t_fsPx[inFS];
-                muon_mometum[1] = t_fsPy[inFS];
-                muon_mometum[2] = t_fsPz[inFS];
+                muon_momentum[0] = t_fsPx[inFS];
+                muon_momentum[1] = t_fsPy[inFS];
+                muon_momentum[2] = t_fsPz[inFS];
                 muonE = t_fsE[inFS];
                 num_muon++;
+            }
+            if(t_fsPdg[inFS] == 2212)    //protonPDG=+-211
+            {
+                proton_momentum[0] = t_fsPx[inFS];
+                proton_momentum[1] = t_fsPy[inFS];
+                proton_momentum[2] = t_fsPz[inFS];
+            }
+            if(abs(t_fsPdg[inFS]) == 211)    //pionPDG=+-211
+            {
+                pion_momentum[0] = t_fsPx[inFS];
+                pion_momentum[1] = t_fsPy[inFS];
+                pion_momentum[2] = t_fsPz[inFS];
             }
         }
         //if(num_muon > 1)
@@ -318,14 +339,14 @@ int main()
         //    }
         //    cout<<"----------------------"<<endl;
         //}
+
         if(num_muon != 1)
             continue;
 
-        muonAngle = GetAngle(Z,muon_mometum);
-        muonMomentum = sqrt(muon_mometum[0]*muon_mometum[0]+muon_mometum[1]*muon_mometum[1]+muon_mometum[2]*muon_mometum[2]);
-
-        //        if(_0pi1p || _0pi0p)    //only looking for 1pi0p channel
-        //            continue;
+        muonAngle = GetAngle(Z,muon_momentum);
+        muonMomentum = sqrt(muon_momentum[0]*muon_momentum[0]+muon_momentum[1]*muon_momentum[1]+muon_momentum[2]*muon_momentum[2]);
+        protonMomentum = sqrt(proton_momentum[0]*proton_momentum[0]+proton_momentum[1]*proton_momentum[1]+proton_momentum[2]*proton_momentum[2]);
+        pionMomentum = sqrt(pion_momentum[0]*pion_momentum[0]+pion_momentum[1]*pion_momentum[1]+pion_momentum[2]*pion_momentum[2]);
 
         Hit temp_neutron_Hit;   
         std::vector<Hit> vectorHit;    //vector of all neutron+gamma hits
@@ -347,7 +368,10 @@ int main()
 
             //energy threshold
             if(t_neutronCubeE[n_neutronHit] < energyHitCut || t_neutronCubeE[n_neutronHit] == 0)
+            //if(t_neutronHitE[n_neutronHit] < energyHitCut || t_neutronHitE[n_neutronHit] == 0)
                 continue;
+            neutronE_deposit[n_neutronHit] = t_neutronHitE[n_neutronHit];
+            neutronE_allhits += t_neutronHitE[n_neutronHit];
 
             //calculate lever arm
             float leverArm = pow(
@@ -366,6 +390,7 @@ int main()
 
             if(tof > 0)
             {
+                temp_neutron_Hit.SetHitE(t_neutronHitE[n_neutronHit]);
                 temp_neutron_Hit.SetTOF(tof);
                 temp_neutron_Hit.SetTOFSmear(tofSmear);
                 temp_neutron_Hit.SetLeverArm(leverArm);
@@ -430,6 +455,7 @@ int main()
 
             //energy threshold
             if(t_gammaCubeE[n_gammaHit] < energyHitCut || t_gammaCubeE[n_gammaHit] == 0)
+            //if(t_gammaHitE[n_gammaHit] < energyHitCut || t_gammaHitE[n_gammaHit] == 0)
                 continue;
 
             //calculate lever arm
@@ -449,6 +475,7 @@ int main()
 
             if(tof > 0)
             {
+                temp_gamma_Hit.SetHitE(t_gammaHitE[n_gammaHit]);
                 temp_gamma_Hit.SetTOF(tof);
                 temp_gamma_Hit.SetTOFSmear(tofSmear);
                 temp_gamma_Hit.SetLeverArm(leverArm);
@@ -504,6 +531,9 @@ int main()
         //sort by time
         if(vectorHit.size() != 0)
             std::sort(vectorHit.begin(), vectorHit.end(), tSort);
+
+        //if(vectorHit.at(0).GetHitE() < energyHitCut)
+            //continue;
 
         //map<position,pair<true,time>>
         std::map<std::tuple<float,float,float>,std::pair<int,float>> cube_fired;
@@ -613,7 +643,7 @@ int main()
         //cube_XZPlane->Reset();
         //cube_YZPlane->Reset();
         //}
-
+        
         //select earliest hit 
         Hit earliest_hit;
         earliest_hit = vectorHit.at(0);

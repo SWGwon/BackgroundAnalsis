@@ -68,6 +68,7 @@ class Hit
         float parentId;             // parentId of hit
         float cubeE;    //neutron cube energy
         float trueE;    //neutron true energy
+        float hitE;    //neutron hit energy
         float trueT;    //neutron true time
         float hitPDG;    //hit PDG
         float energyDeposit;        // energy deposited by the neutron
@@ -118,6 +119,9 @@ class Hit
 ////////////////////////////////////////////////////////
         void SetTrueE(float trueE);
         float GetTrueE();
+////////////////////////////////////////////////////////
+        void SetHitE(float hitE);
+        float GetHitE();
 ////////////////////////////////////////////////////////
         void SetTrueT(float trueT);
         float GetTrueT();

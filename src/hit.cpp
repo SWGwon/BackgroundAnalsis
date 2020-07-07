@@ -129,6 +129,15 @@ float Hit::GetTrueE()
     return this->trueE;
 }
 ////////////////////////////////////////////////////////////////////////
+void Hit::SetHitE(float hitE)
+{
+    this->hitE = hitE;
+}
+float Hit::GetHitE()
+{
+    return this->hitE;
+}
+////////////////////////////////////////////////////////////////////////
 void Hit::SetTrueT(float trueT)
 {
     this->trueT = trueT;
