@@ -1,7 +1,6 @@
 #include "hit.h"
 #include "functions.h"
 
-
 using namespace std;
 
 int main()
@@ -17,6 +16,8 @@ int main()
     TH1F * TOF_signal = new TH1F("TOF_signal","time of flight of signal", 25,0,25);
     TH1F * CubeE_signal = new TH1F("CubeE_signal", "CubeE of signal", 30, 0, 15);
     TH1F * nCubeDis_signal = new TH1F("nCubeDis_signal","number of cubes, signal", 50, 0, 100);
+    TH1F * betaSmear_signal = new TH1F("betaSmear_signal","beta of signal smearT",30,0,1.5);
+    TH1F * TOFSmear_signal = new TH1F("TOFSmear_signal","time of flight of signal smearT", 25,0,25);
     //}
     //secondary neutron{ 
     TH1F * leverarm_secondary_neutron = new TH1F("leverarm_secondary_neutron","lever arm of secondary_neutron",20,0,200);
@@ -26,6 +27,8 @@ int main()
     TH1F * TOF_secondary_neutron = new TH1F("TOF_secondary_neutron","time of flight of secondary_neutron", 25,0,25);
     TH1F * CubeE_secondary_neutron = new TH1F("CubeE_secondary_neutron", "CubeE of secondary_neutron", 30, 0, 15);
     TH1F * nCubeDis_secondary_neutron = new TH1F("nCubeDis_secondary_neutron","number of cubes, secondary neutron", 50, 0, 100);
+    TH1F * betaSmear_secondary_neutron = new TH1F("betaSmear_secondary_neutron","beta of secondary_neutron smearT",30,0,1.5);
+    TH1F * TOFSmear_secondary_neutron = new TH1F("TOFSmear_secondary_neutron","time of flight of secondary_neutron smearT", 25,0,25);
     //}
 
     //primary gamma{
@@ -36,6 +39,8 @@ int main()
     TH1F * TOF_primary_gamma = new TH1F("TOF_primary_gamma","time of flight of primary_gamma", 25,0,25);
     TH1F * CubeE_primary_gamma = new TH1F("CubeE_primary_gamma", "CubeE of primary_gamma", 30, 0, 15);
     TH1F * nCubeDis_primary_gamma = new TH1F("nCubeDis_primary_gamma","number of cubes, primary gamma", 50, 0, 100);
+    TH1F * betaSmear_primary_gamma = new TH1F("betaSmear_primary_gamma","beta of primary_gamma smearT",30,0,1.5);
+    TH1F * TOFSmear_primary_gamma = new TH1F("TOFSmear_primary_gamma","time of flight of primary_gamma smearT", 25,0,25);
     //}
 
     //secondary gamma{
@@ -46,6 +51,8 @@ int main()
     TH1F * TOF_secondary_gamma = new TH1F("TOF_secondary_gamma","time of flight of secondary_gamma", 25,0,25);
     TH1F * CubeE_secondary_gamma = new TH1F("CubeE_secondary_gamma", "CubeE of secondary_gamma", 30, 0, 15);
     TH1F * nCubeDis_secondary_gamma = new TH1F("nCubeDis_secondary_gamma","number of cubes, secondary gamma", 50, 0, 100);
+    TH1F * betaSmear_secondary_gamma = new TH1F("betaSmear_secondary_gamma","beta of secondary_gamma smearT",30,0,1.5);
+    TH1F * TOFSmear_secondary_gamma = new TH1F("TOFSmear_secondary_gamma","time of flight of secondary_gamma smearT", 25,0,25);
     //}
 
     TH1F * timeWindow = new TH1F("timeWindow", "",250,0,25);
@@ -66,21 +73,21 @@ int main()
 
     //}
 
-    int filenum;
-    cout<<"filenum :"<<endl;
-    cin>>filenum;
+    ///int filenum;
+    ///cout<<"filenum :"<<endl;
+    ///cin>>filenum;
     cout<<"---------------------------"<<endl;
     cout<<"file loading..."<<endl;
 
     TChain tree("tree");
-    for(int i = 1; i != filenum+1; i++)
-    { //cout<<"\033[1APROD"<<101<<": "<<(double)(i*100/filenum)<<"%\033[1000D"<<endl;
-        string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion_wNuE.root",i);
-        //string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
-        //string file = Form("/pnfs/dune/persistent/users/gyang/3DST/dump/standardGeo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
-        tree.Add(TString(file));
-    }
-    //tree.Add("/Users/gwon/Geo12/PROD101/RHC_*_wGamma_2ndVersion.root");
+    //for(int i = 1; i != filenum+1; i++)
+    //{ //cout<<"\033[1APROD"<<101<<": "<<(double)(i*100/filenum)<<"%\033[1000D"<<endl;
+    //    string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion_wNuE.root",i);
+    //    //string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
+    //    //string file = Form("/pnfs/dune/persistent/users/gyang/3DST/dump/standardGeo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
+    //    //tree.Add(TString(file));
+    //}
+    tree.Add("/Users/gwon/BackgroundAnalysis/data/CC_selected.root");
 
     //vectors I defined
     float vec_piDeath_to_hit[3];
@@ -183,8 +190,10 @@ int main()
     float leverArm; output_tree->Branch("leverArm",&leverArm, "lever arm");
     float angle; output_tree->Branch("angle",&angle, "angle between C and hit");
     float beta; output_tree->Branch("beta",&beta, "beta");
+    float betaSmear; output_tree->Branch("betaSmear",&betaSmear, "betaSmear");
     float distanceCHit; output_tree->Branch("distanceCHit",&distanceCHit, "distance C and hit");
     float tof; output_tree->Branch("tof",&tof, "time of flight");
+    float tofSmear; output_tree->Branch("tofSmear",&tofSmear, "smeared time of flight");
     float cubeE; output_tree->Branch("cubeE",&cubeE, "CubeE");
     float nCube; output_tree->Branch("nCube", &nCube, "nCube");
     float category; output_tree->Branch("category", &category, "category");
@@ -218,8 +227,10 @@ int main()
         leverArm = -1000;
         angle = -1000;
         beta = -1000;
+        betaSmear = -1000;
         distanceCHit = -1000;
         tof = -1000;
+        tofSmear = -1000;
         cubeE = -1000;
         nCube = -1000;
         category = -1000;
@@ -276,6 +287,9 @@ int main()
             }
         }
 
+        if(num_pi0 != 0)
+            continue;
+
         //flags for channels
         bool _1pi0p = false;
         bool _0pi1p = false;
@@ -300,8 +314,6 @@ int main()
         if(!_1pi0p && !_0pi1p && !_0pi0p)
             continue;
 
-        if(num_pi0 != 0)
-            continue;
 
         float muon_momentum[3];
         float proton_momentum[3];
@@ -725,10 +737,14 @@ int main()
                 distanceCHit = -1000;
             }
 
-            beta_signal->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
-            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
-            TOF_signal->Fill(earliest_hit.GetTOFSmear());
-            tof = earliest_hit.GetTOFSmear();
+            beta_signal->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
+            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
+            TOF_signal->Fill(earliest_hit.GetTOF());
+            tof = earliest_hit.GetTOF();
+            betaSmear_signal->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
+            betaSmear = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
+            TOFSmear_signal->Fill(earliest_hit.GetTOFSmear());
+            tofSmear = earliest_hit.GetTOFSmear();
             CubeE_signal->Fill(earliest_hit.GetCubeE());
             cubeE = earliest_hit.GetCubeE();
             nCubeDis_signal->Fill(cube_cluster.size());
@@ -763,10 +779,14 @@ int main()
                 angle = -1000;
                 distanceCHit = -1000;
             }
-            beta_secondary_neutron->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
-            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
-            TOF_secondary_neutron->Fill(earliest_hit.GetTOFSmear());
-            tof = earliest_hit.GetTOFSmear();
+            beta_secondary_neutron->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
+            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
+            TOF_secondary_neutron->Fill(earliest_hit.GetTOF());
+            tof = earliest_hit.GetTOF();
+            betaSmear_secondary_neutron->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
+            betaSmear = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
+            TOFSmear_secondary_neutron->Fill(earliest_hit.GetTOFSmear());
+            tofSmear = earliest_hit.GetTOFSmear();
             CubeE_secondary_neutron->Fill(earliest_hit.GetCubeE());
             cubeE = earliest_hit.GetCubeE();
             nCubeDis_secondary_neutron->Fill(cube_cluster.size());
@@ -801,10 +821,14 @@ int main()
                 angle = -1000;
                 distanceCHit = -1000;
             }
-            beta_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity);
-            beta = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity;
-            TOF_primary_gamma->Fill(earliest_hit.GetTOFSmear());
-            tof = earliest_hit.GetTOFSmear();
+            beta_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity);
+            beta = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity;
+            TOF_primary_gamma->Fill(earliest_hit.GetTOF());
+            tof = earliest_hit.GetTOF();
+            betaSmear_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity);
+            betaSmear = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity;
+            TOFSmear_primary_gamma->Fill(earliest_hit.GetTOFSmear());
+            tofSmear = earliest_hit.GetTOFSmear();
             CubeE_primary_gamma->Fill(earliest_hit.GetCubeE());
             cubeE = earliest_hit.GetCubeE();
             nCubeDis_primary_gamma->Fill(cube_cluster.size());
@@ -836,10 +860,14 @@ int main()
                 angle = -1000;
                 distanceCHit = -1000;
             }
-            beta_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
-            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
-            TOF_secondary_gamma->Fill(earliest_hit.GetTOFSmear());
-            tof = earliest_hit.GetTOFSmear();
+            beta_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
+            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
+            TOF_secondary_gamma->Fill(earliest_hit.GetTOF());
+            tof = earliest_hit.GetTOF();
+            betaSmear_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
+            betaSmear = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
+            TOFSmear_secondary_gamma->Fill(earliest_hit.GetTOFSmear());
+            tofSmear = earliest_hit.GetTOFSmear();
             CubeE_secondary_gamma->Fill(earliest_hit.GetCubeE());
             cubeE = earliest_hit.GetCubeE();
             nCubeDis_secondary_gamma->Fill(cube_cluster.size());
@@ -1051,6 +1079,52 @@ int main()
     can->Clear();
     //}
 
+    //betaSmear{
+    betaSmear_signal->Write();
+    betaSmear_signal->GetXaxis()->SetTitle("speed of particle/c");
+    betaSmear_signal->GetYaxis()->SetTitle("Normalized fraction");
+    betaSmear_signal->GetYaxis()->CenterTitle(1);
+    betaSmear_signal->GetXaxis()->SetLabelSize(0.045);
+    betaSmear_signal->GetYaxis()->SetLabelSize(0.045);
+    betaSmear_signal->GetXaxis()->SetTitleSize(0.060);
+    betaSmear_signal->GetYaxis()->SetTitleSize(0.055);
+    betaSmear_signal->GetYaxis()->SetTitleOffset(0.9);
+    betaSmear_signal->GetXaxis()->SetTitleOffset(0.70);
+    betaSmear_signal->SetLineColor(2);
+    betaSmear_signal->SetLineWidth(3);
+    betaSmear_signal->SetStats(0);
+    betaSmear_signal->Scale(1/betaSmear_signal->Integral(),"nosw2");
+    betaSmear_signal->GetXaxis()->SetTitle("speed of particle/c");
+    betaSmear_signal->GetYaxis()->SetRangeUser(0,0.3);
+    betaSmear_signal->SetTitle("betaSmear");
+    betaSmear_signal->Draw();
+
+    betaSmear_secondary_neutron->Write();
+    betaSmear_secondary_neutron->SetLineColor(4);
+    betaSmear_secondary_neutron->SetLineWidth(3);
+    betaSmear_secondary_neutron->SetStats(0);
+    betaSmear_secondary_neutron->Scale(1/betaSmear_secondary_neutron->Integral(),"nosw2");
+    betaSmear_secondary_neutron->Draw("same");
+
+    betaSmear_primary_gamma->Write();
+    betaSmear_primary_gamma->SetLineColor(6);
+    betaSmear_primary_gamma->SetLineWidth(3);
+    betaSmear_primary_gamma->SetStats(0);
+    betaSmear_primary_gamma->Scale(1/betaSmear_primary_gamma->Integral(),"nosw2");
+    betaSmear_primary_gamma->Draw("same");
+
+    betaSmear_secondary_gamma->Write();
+    betaSmear_secondary_gamma->SetLineColor(1);
+    betaSmear_secondary_gamma->SetLineWidth(3);
+    betaSmear_secondary_gamma->SetStats(0);
+    betaSmear_secondary_gamma->Scale(1/betaSmear_secondary_gamma->Integral(),"nosw2");
+    betaSmear_secondary_gamma->Draw("same");
+
+    legend1->Draw();
+    can->SaveAs("betaSmear.pdf");
+    can->Clear();
+    //}
+
     //distance{
     distance_signal->Write();
     distance_signal->GetXaxis()->SetTitle("[cm]");
@@ -1140,6 +1214,52 @@ int main()
 
     legend->Draw();
     can->SaveAs("TOF.pdf");
+    can->Clear();
+    //}
+
+    //TOFSmear{
+    TOFSmear_signal->Write();
+    TOFSmear_signal->GetXaxis()->SetTitle("[ns]");
+    TOFSmear_signal->GetYaxis()->SetTitle("Normalized fraction");
+    TOFSmear_signal->GetYaxis()->CenterTitle(1);
+    TOFSmear_signal->GetXaxis()->SetLabelSize(0.045);
+    TOFSmear_signal->GetYaxis()->SetLabelSize(0.045);
+    TOFSmear_signal->GetXaxis()->SetTitleSize(0.060);
+    TOFSmear_signal->GetYaxis()->SetTitleSize(0.055);
+    TOFSmear_signal->GetYaxis()->SetTitleOffset(0.9);
+    TOFSmear_signal->GetXaxis()->SetTitleOffset(0.70);
+    TOFSmear_signal->SetLineColor(2);
+    TOFSmear_signal->SetLineWidth(3);
+    TOFSmear_signal->SetStats(0);
+    TOFSmear_signal->Scale(1/TOFSmear_signal->Integral(),"nosw2");
+    TOFSmear_signal->GetXaxis()->SetTitle("ns");
+    TOFSmear_signal->GetYaxis()->SetRangeUser(0,0.7);
+    TOFSmear_signal->SetTitle("Time of flight");
+    TOFSmear_signal->Draw();
+
+    TOFSmear_secondary_neutron->Write();
+    TOFSmear_secondary_neutron->SetLineColor(4);
+    TOFSmear_secondary_neutron->SetLineWidth(3);
+    TOFSmear_secondary_neutron->SetStats(0);
+    TOFSmear_secondary_neutron->Scale(1/TOFSmear_secondary_neutron->Integral(),"nosw2");
+    TOFSmear_secondary_neutron->Draw("same");
+
+    TOFSmear_primary_gamma->Write();
+    TOFSmear_primary_gamma->SetLineColor(6);
+    TOFSmear_primary_gamma->SetLineWidth(3);
+    TOFSmear_primary_gamma->SetStats(0);
+    TOFSmear_primary_gamma->Scale(1/TOFSmear_primary_gamma->Integral(),"nosw2");
+    TOFSmear_primary_gamma->Draw("same");
+
+    TOFSmear_secondary_gamma->Write();
+    TOFSmear_secondary_gamma->SetLineColor(1);
+    TOFSmear_secondary_gamma->SetLineWidth(3);
+    TOFSmear_secondary_gamma->SetStats(0);
+    TOFSmear_secondary_gamma->Scale(1/TOFSmear_secondary_gamma->Integral(),"nosw2");
+    TOFSmear_secondary_gamma->Draw("same");
+
+    legend->Draw();
+    can->SaveAs("TOFSmear.pdf");
     can->Clear();
     //}
 
