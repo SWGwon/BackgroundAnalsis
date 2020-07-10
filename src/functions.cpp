@@ -5,6 +5,11 @@ bool tSort(Hit Hit1, Hit Hit2)
     return(Hit1.GetT() < Hit2.GetT());
 }
 
+bool tSortSmear(Hit Hit1, Hit Hit2)
+{
+    return(Hit1.GetTSmear() < Hit2.GetTSmear());
+}
+
 //a, b are vector
 double GetAngle(float a[], float b[])
 {

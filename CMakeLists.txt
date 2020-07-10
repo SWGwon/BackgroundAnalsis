@@ -26,5 +26,8 @@ TARGET_LINK_LIBRARIES(${CMAKE_PROJECT_NAME} bkg)
 ADD_EXECUTABLE(CCSelection ${SRC_DIR}/CCSelection.cpp)
 TARGET_LINK_LIBRARIES(CCSelection bkg)
 
+ADD_EXECUTABLE(CDRChannelSelection ${SRC_DIR}/CDRChannelSelection.cpp)
+TARGET_LINK_LIBRARIES(CDRChannelSelection bkg)
+
 #ADD_EXECUTABLE(Guang_validation Guang_validation.cpp)
 #TARGET_LINK_LIBRARIES(Guang_validation bkg)

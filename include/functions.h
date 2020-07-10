@@ -6,6 +6,9 @@
 //time sorting
 bool tSort(Hit Hit1, Hit Hit2);
 
+//time sorting smeared case
+bool tSortSmear(Hit Hit1, Hit Hit2);
+
 //a, b are vector
 double GetAngle(float a[], float b[]);
 

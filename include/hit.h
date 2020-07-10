@@ -60,6 +60,7 @@ class Hit
         float Y;                    // Y position of hit
         float Z;                    // Z position of hit
         float T;                    // true T of hit
+        float TSmear;               // smeared T of hit
         float vtxX;                 // X position of vertex
         float vtxY;                 // Y position of vertex
         float vtxZ;                 // Z position of vertex
@@ -95,6 +96,9 @@ class Hit
 ////////////////////////////////////////////////////////
         void SetT(float T);
         float GetT();
+////////////////////////////////////////////////////////
+        void SetTSmear(float TSmear);
+        float GetTSmear();
 ////////////////////////////////////////////////////////
         void SetVtxX(float vtxX);
         float GetVtxX();

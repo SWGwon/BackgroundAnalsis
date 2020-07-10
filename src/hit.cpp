@@ -57,6 +57,15 @@ float Hit::GetT()
     return this->T;
 }
 ////////////////////////////////////////////////////////////////////////
+void Hit::SetTSmear(float TSmear)
+{
+    this->TSmear = TSmear;
+}
+float Hit::GetTSmear()
+{
+    return this->TSmear;
+}
+////////////////////////////////////////////////////////////////////////
 void Hit::SetVtxX(float vtxX)
 {
     this->vtxX = vtxX;

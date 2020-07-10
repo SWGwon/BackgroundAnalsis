@@ -73,9 +73,9 @@ int main()
 
     //}
 
-    ///int filenum;
-    ///cout<<"filenum :"<<endl;
-    ///cin>>filenum;
+    //int filenum;
+    //cout<<"filenum :"<<endl;
+    //cin>>filenum;
     cout<<"---------------------------"<<endl;
     cout<<"file loading..."<<endl;
 
@@ -393,8 +393,8 @@ int main()
 
             //calculate signal window; time of flight
             float tof = t_neutronHitT[n_neutronHit] - t_vtxTime - 1;
-            float tofSmear = t_neutronHitSmearT[n_neutronHit] - t_vtxTime - 1;
-            //float tofSmear = tof + gRandom->Uniform(-0.5,0.5);
+            //float tofSmear = t_neutronHitSmearT[n_neutronHit] - t_vtxTime - 1;
+            float tofSmear = tof + 0.5*gRandom->Gaus(0,1);
 
             //Fix a bug from edep-sim
             if(tof == 1)
@@ -438,6 +438,8 @@ int main()
                 else
                     temp_neutron_Hit.isFromProton = 0;
                 temp_neutron_Hit.SetT(t_neutronHitT[n_neutronHit]);
+                //temp_neutron_Hit.SetTSmear(t_neutronHitSmearT[n_neutronHit]);
+                temp_neutron_Hit.SetTSmear(t_neutronHitT[n_neutronHit]+0.5*gRandom->Gaus(0,1));
                 temp_neutron_Hit.SetX(t_neutronHitX[n_neutronHit]);
                 temp_neutron_Hit.SetY(t_neutronHitY[n_neutronHit]);
                 temp_neutron_Hit.SetZ(t_neutronHitZ[n_neutronHit]);
@@ -478,8 +480,8 @@ int main()
 
             //calculate signal window; time of flight
             float tof = t_gammaHitT[n_gammaHit] - t_vtxTime - 1;
-            float tofSmear = t_gammaHitSmearT[n_gammaHit] - t_vtxTime - 1;
-            //float tofSmear = tof + gRandom->Uniform(-0.5,0.5);
+            //float tofSmear = t_gammaHitSmearT[n_gammaHit] - t_vtxTime - 1;
+            float tofSmear = tof + 0.5*gRandom->Gaus(0,1);
 
             //Fix a bug from edep-sim
             if(tof == 1)
@@ -522,6 +524,8 @@ int main()
                 else
                     temp_gamma_Hit.isFromProton = 0;
                 temp_gamma_Hit.SetT(t_gammaHitT[n_gammaHit]);
+                //temp_gamma_Hit.SetTSmear(t_gammaHitSmearT[n_gammaHit]);
+                temp_gamma_Hit.SetTSmear(t_gammaHitT[n_gammaHit]+0.5*gRandom->Gaus(0,1));
                 temp_gamma_Hit.SetX(t_gammaHitX[n_gammaHit]);
                 temp_gamma_Hit.SetY(t_gammaHitY[n_gammaHit]);
                 temp_gamma_Hit.SetZ(t_gammaHitZ[n_gammaHit]);
@@ -540,9 +544,13 @@ int main()
         if(vectorHit.at(0).GetTrueT() > 10000)
             continue;
 
-        //sort by time
+        //sort by time smear
         if(vectorHit.size() != 0)
-            std::sort(vectorHit.begin(), vectorHit.end(), tSort);
+            std::sort(vectorHit.begin(), vectorHit.end(), tSortSmear);
+
+        //sort by time
+        //if(vectorHit.size() != 0)
+        //    std::sort(vectorHit.begin(), vectorHit.end(), tSort);
 
         //if(vectorHit.at(0).GetHitE() < energyHitCut)
             //continue;
