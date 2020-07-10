@@ -4,8 +4,11 @@ using namespace std;
 
 int main()
 {
+    cout<<"---------------------------"<<endl;
+    cout<<"file loading..."<<endl;
+
     TChain tree("tree");
-    for(int i = 1; i != 10; i++)
+    for(int i = 1; i != 1000; i++)
     { //cout<<"\033[1APROD"<<101<<": "<<(double)(i*100/filenum)<<"%\033[1000D"<<endl;
         string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion_wNuE.root",i);
         //string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
@@ -100,69 +103,60 @@ int main()
     float t_nuEnergy; tree.SetBranchAddress("nuEnergy",&t_nuEnergy);
 
 
-    TFile * outfile = new TFile("CDR_CC_selected.root","RECREATE");
+    TFile * outfile = new TFile("CDR_CC_1pi0.root","RECREATE");
     TTree * output_tree = tree.CloneTree(0);
 
-    float muonKE;
+    cout<<"file loading is done"<<endl;
+    cout<<"---------------------------"<<endl;
+    cout<<"total entries: "<<tree.GetEntries()<<endl;
+    cout<<"event loop starts"<<endl;
+    cout<<endl;
+
     for(int i = 0; i < tree.GetEntries(); i++)
     {
         tree.GetEntry(i);
-        //cout<<"\033[1Aevent: "<<((double)i*100/tree.GetEntries())<<"%          \033[1000D"<<endl;
+        cout<<"\033[1Aevent: "<<((double)i*100/tree.GetEntries())<<"%          \033[1000D"<<endl;
+
         //out of fiducial volume
         if(abs(t_vtx[0]) > 50 || abs(t_vtx[1]) > 50 || abs(t_vtx[2]) > 50)
             continue;
 
         //check whether it's CC event or not
         bool is_CC = false;
-        int num_mu = 0;
         int num_pi = 0;
         int num_pi0 = 0;
         int num_proton = 0;
-        std::vector<float> protonKE;
-        std::vector<float> pionKE;
-        std::vector<float> pion0KE;
         for(int inFS = 0; inFS < t_nFS; inFS++)
         {
-            //cout<<"PDG: "<<t_fsPdg[inFS]<<endl;
             if(t_fsPdg[inFS] == -13)    //anti muonPDG=13
             {
-                num_mu++;
                 is_CC = true;
-                muonKE = t_fsE[inFS];
-                //break;
+                break;
+            }
+        }
+        for(int inFS = 0; inFS < t_nFS; inFS++)
+        {
+            if(abs(t_fsPdg[inFS]) == 111)    //pion0PDG=111
+            {
+                num_pi0++;
             }
             if(t_fsPdg[inFS] == 2212)
             {
                 num_proton++;
-                protonKE.push_back(t_fsE[inFS]);
             }
             if(abs(t_fsPdg[inFS]) == 211)    //pionPDG=+-211
             {
                 num_pi++;
-                pionKE.push_back(t_fsE[inFS]);
             }
         }
-        //cout<<"------------------------"<<endl;
-        if(num_mu > 1)
-            cout<<"multiple muon"<<endl;
-
-        //if it's not CC skip this event
         if(!is_CC)
             continue;
-
-        //threshold: muon KE > 10MeV/
-        if(muonKE < 10)
+        if(num_pi0 != 1)
             continue;
-
-        //pi+-
-        //threhold: pion KE > 6.6
-      
-        //pi0
-        
-        //Proton
-        //threhold: proton KE > 15
-       
-
+        if(num_proton != 0)
+            continue;
+        if(num_pi != 0)
+            continue;
         output_tree->Fill();
     }
     //output_tree->Print();
