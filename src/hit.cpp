@@ -120,6 +120,15 @@ float Hit::GetParentId()
     return this->parentId;
 }
 ////////////////////////////////////////////////////////////////////////
+void Hit::SetParentPdg(float parentPdg)
+{
+    this->parentPdg = parentPdg;
+}
+float Hit::GetParentPdg()
+{
+    return this->parentPdg;
+}
+////////////////////////////////////////////////////////////////////////
 void Hit::SetCubeE(float cubeE)
 {
     this->cubeE = cubeE;

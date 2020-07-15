@@ -18,6 +18,7 @@ int main()
     TH1F * nCubeDis_signal = new TH1F("nCubeDis_signal","number of cubes, signal", 50, 0, 100);
     TH1F * betaSmear_signal = new TH1F("betaSmear_signal","beta of signal smearT",30,0,1.5);
     TH1F * TOFSmear_signal = new TH1F("TOFSmear_signal","time of flight of signal smearT", 25,0,25);
+    TH1F * clusterEnergy_signal = new TH1F("clusterEnergy_signal","cluster energy of signal", 25,0,250);
     //}
     //secondary neutron{ 
     TH1F * leverarm_secondary_neutron = new TH1F("leverarm_secondary_neutron","lever arm of secondary_neutron",20,0,200);
@@ -29,6 +30,7 @@ int main()
     TH1F * nCubeDis_secondary_neutron = new TH1F("nCubeDis_secondary_neutron","number of cubes, secondary neutron", 50, 0, 100);
     TH1F * betaSmear_secondary_neutron = new TH1F("betaSmear_secondary_neutron","beta of secondary_neutron smearT",30,0,1.5);
     TH1F * TOFSmear_secondary_neutron = new TH1F("TOFSmear_secondary_neutron","time of flight of secondary_neutron smearT", 25,0,25);
+    TH1F * clusterEnergy_secondary_neutron = new TH1F("clusterEnergy_secondary_neutron","cluster energy of secondary_neutron", 25,0,250);
     //}
 
     //primary gamma{
@@ -41,6 +43,7 @@ int main()
     TH1F * nCubeDis_primary_gamma = new TH1F("nCubeDis_primary_gamma","number of cubes, primary gamma", 50, 0, 100);
     TH1F * betaSmear_primary_gamma = new TH1F("betaSmear_primary_gamma","beta of primary_gamma smearT",30,0,1.5);
     TH1F * TOFSmear_primary_gamma = new TH1F("TOFSmear_primary_gamma","time of flight of primary_gamma smearT", 25,0,25);
+    TH1F * clusterEnergy_primary_gamma = new TH1F("clusterEnergy_primary_gamma","cluster energy of primary_gamma", 25,0,250);
     //}
 
     //secondary gamma{
@@ -53,6 +56,7 @@ int main()
     TH1F * nCubeDis_secondary_gamma = new TH1F("nCubeDis_secondary_gamma","number of cubes, secondary gamma", 50, 0, 100);
     TH1F * betaSmear_secondary_gamma = new TH1F("betaSmear_secondary_gamma","beta of secondary_gamma smearT",30,0,1.5);
     TH1F * TOFSmear_secondary_gamma = new TH1F("TOFSmear_secondary_gamma","time of flight of secondary_gamma smearT", 25,0,25);
+    TH1F * clusterEnergy_secondary_gamma = new TH1F("clusterEnergy_secondary_gamma","cluster energy of secondary_gamma", 25,0,250);
     //}
 
     TH1F * timeWindow = new TH1F("timeWindow", "",250,0,25);
@@ -87,7 +91,12 @@ int main()
     //    //string file = Form("/pnfs/dune/persistent/users/gyang/3DST/dump/standardGeo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
     //    //tree.Add(TString(file));
     //}
-    tree.Add("/Users/gwon/BackgroundAnalysis/data/CC_selected.root");
+    //tree.Add("/Users/gwon/BackgroundAnalysis/CDR/CC1pi0/CDR_CC_1pi0.root");
+    //tree.Add("/Users/gwon/BackgroundAnalysis/CDR_doublecheck/CDR_CC0pi+-0P.root");
+    //tree.Add("/Users/gwon/BackgroundAnalysis/CDR/CC0pi+-0P/CDR_CC0pi+-0P.root");
+    //tree.Add("/Users/gwon/BackgroundAnalysis/CDR/CCnothing/CDR_CC_nothing.root");
+    //tree.Add("/Users/gwon/BackgroundAnalysis/data/CC_selected.root");
+    tree.Add("./NC*.root");
 
     //vectors I defined
     float vec_piDeath_to_hit[3];
@@ -211,6 +220,9 @@ int main()
     float protonMomentum; output_tree->Branch("protonMomentum", &protonMomentum, "protonMomentum");
     float pionMomentum; output_tree->Branch("pionMomentum", &pionMomentum, "pionMomentum");
     float neutronE_deposit[1000]; output_tree->Branch("neutronE_deposit", &neutronE_deposit, "neutronE_deposit");
+    float energy_deposit_in_cluster; output_tree->Branch("energy_deposit_in_cluster", &energy_deposit_in_cluster, "energy_deposit_in_cluster");
+
+    float parentPDG; output_tree->Branch("parentPDG", &parentPDG, "parentPDG");
 
     cout<<"file loading is done"<<endl;
     cout<<"---------------------------"<<endl;
@@ -218,6 +230,7 @@ int main()
     cout<<"event loop starts"<<endl;
     cout<<endl;
 
+    //for(int event = 0; event < 1000; event++)
     for(int event = 0; event < tree.GetEntries(); event++)
     {
         tree.GetEntry(event);
@@ -247,48 +260,32 @@ int main()
         neutronE_allhits = 0;
         protonMomentum = -1000;
         pionMomentum = -1000;
+        energy_deposit_in_cluster = 0;
+        parentPDG = -1000;
 
-        //out of fiducial volume
-        if(abs(t_vtx[0]) > 50 || abs(t_vtx[1]) > 50 || abs(t_vtx[2]) > 50)
-            continue;
-
-        //check whether it's CC event or not
-        bool is_CC = false;
-        for(int inFS = 0; inFS < t_nFS; inFS++)
-        {
-            if(abs(t_fsPdg[inFS]) == 11 || abs(t_fsPdg[inFS]) == 13)    //electronPDG=11,muonPDG=13
-            {
-                is_CC = true;
-                break;
-            }
-        }
-
-        //if it's not CC skip this event
-        if(!is_CC)
-            continue;
-
-        //count # of charged pion,proton in FS
         int num_pi = 0;
-        int num_proton = 0;
         int num_pi0 = 0;
+        int num_proton = 0;
+        int num_neutron = 0;
         for(int inFS = 0; inFS < t_nFS; inFS++)
         {
             if(abs(t_fsPdg[inFS]) == 111)    //pion0PDG=111
             {
                 num_pi0++;
             }
+            if(t_fsPdg[inFS] == 2212)
+            {
+                num_proton++;
+            }
+            if(t_fsPdg[inFS] == 2112)
+            {
+                num_neutron++;
+            }
             if(abs(t_fsPdg[inFS]) == 211)    //pionPDG=+-211
             {
                 num_pi++;
             }
-            if(t_fsPdg[inFS] == 2212)    //protonPDG=+-211
-            {
-                num_proton++;
-            }
         }
-
-        if(num_pi0 != 0)
-            continue;
 
         //flags for channels
         bool _1pi0p = false;
@@ -311,9 +308,8 @@ int main()
             channel = 0;
         }
 
-        if(!_1pi0p && !_0pi1p && !_0pi0p)
-            continue;
-
+        //if(!_1pi0p && !_0pi1p && !_0pi0p)
+        //    continue;
 
         float muon_momentum[3];
         float proton_momentum[3];
@@ -352,8 +348,8 @@ int main()
         //    cout<<"----------------------"<<endl;
         //}
 
-        if(num_muon != 1)
-            continue;
+        //if(num_muon != 1)
+        //    continue;
 
         muonAngle = GetAngle(Z,muon_momentum);
         muonMomentum = sqrt(muon_momentum[0]*muon_momentum[0]+muon_momentum[1]*muon_momentum[1]+muon_momentum[2]*muon_momentum[2]);
@@ -425,7 +421,7 @@ int main()
                 temp_neutron_Hit.SetCubeE(t_neutronCubeE[n_neutronHit]);
 
                 temp_neutron_Hit.SetParentId(t_neutronParentId[n_neutronHit]);
-                temp_neutron_Hit.parentPdg = t_neutronParentPDG[n_neutronHit];
+                temp_neutron_Hit.SetParentPdg(t_neutronParentPDG[n_neutronHit]);
                 temp_neutron_Hit.SetHitPDG(t_neutronHitPDG[n_neutronHit]);
 
                 temp_neutron_Hit.SetVtxT(t_vtxTime);
@@ -469,7 +465,7 @@ int main()
 
             //energy threshold
             if(t_gammaCubeE[n_gammaHit] < energyHitCut || t_gammaCubeE[n_gammaHit] == 0)
-            //if(t_gammaHitE[n_gammaHit] < energyHitCut || t_gammaHitE[n_gammaHit] == 0)
+                //if(t_gammaHitE[n_gammaHit] < energyHitCut || t_gammaHitE[n_gammaHit] == 0)
                 continue;
 
             //calculate lever arm
@@ -511,7 +507,7 @@ int main()
                 temp_gamma_Hit.SetCubeE(t_gammaCubeE[n_gammaHit]);
 
                 temp_gamma_Hit.SetParentId(t_gammaParentId[n_gammaHit]);
-                temp_gamma_Hit.parentPdg = t_gammaParentPDG[n_gammaHit];
+                temp_gamma_Hit.SetParentPdg(t_gammaParentPDG[n_gammaHit]);
                 temp_gamma_Hit.SetHitPDG(t_gammaHitPDG[n_gammaHit]);
 
                 temp_gamma_Hit.SetVtxT(t_vtxTime);
@@ -548,15 +544,18 @@ int main()
         if(vectorHit.size() != 0)
             std::sort(vectorHit.begin(), vectorHit.end(), tSortSmear);
 
-        //sort by time
+        //sort by true time
         //if(vectorHit.size() != 0)
         //    std::sort(vectorHit.begin(), vectorHit.end(), tSort);
-
-        //if(vectorHit.at(0).GetHitE() < energyHitCut)
-            //continue;
+        
+        //parent == pi0 for gamma
+        //if(vectorHit.at(0).GetParentPdg() != 111)
+        //    continue;
 
         //map<position,pair<true,time>>
         std::map<std::tuple<float,float,float>,std::pair<int,float>> cube_fired;
+        //e deposit in cluster
+        std::map<std::tuple<float,float,float>,std::pair<int,float>> cube_fired_e_deposit;
 
         for(auto t:vectorHit)
         {
@@ -565,7 +564,8 @@ int main()
             YZPlane_allhits->Fill(t.GetY(),t.GetZ());
             XZPlane_allhits->Fill(t.GetX(),t.GetZ());
             std::tuple<float, float, float> temp_position = std::make_tuple(t.GetX(),t.GetY(),t.GetZ());
-            cube_fired.insert(make_pair(temp_position,make_pair(1,t.GetT())));  //모든 힛들이 제대로 들어가는것 확인완료
+            cube_fired.insert(make_pair(temp_position,make_pair(1,t.GetT())));  
+            cube_fired_e_deposit.insert(make_pair(temp_position,make_pair(1,t.GetCubeE())));  
         }
 
         //cube cluster vector
@@ -584,7 +584,7 @@ int main()
             for(auto t:cube_cluster)
             {
                 //making adjacent cube 
-                int N = 1;      //adjacent cube range
+                int N = 2;      //adjacent cube range
                 int number_of_direction_array = 0;
                 std::tuple<float, float, float> direction[(2*N+1)*(2*N+1)*(2*N+1)];
                 for(int x = -N; x < N+1; x++)
@@ -603,6 +603,7 @@ int main()
                 {
                     if(cube_fired.find(direction[i])->second.first == 1 && abs(t.GetT()-cube_fired.find(direction[i])->second.second) < 1)
                     {
+                        energy_deposit_in_cluster += cube_fired_e_deposit.find(direction[i])->second.second;
                         Hit temp_hit;
                         temp_hit.SetX(std::get<0>(direction[i]));
                         temp_hit.SetY(std::get<1>(direction[i]));
@@ -629,41 +630,41 @@ int main()
 
         //event display
         //{
-        //gStyle->SetFrameFillColor(1);
-        //if(XYPlane_allhits->GetEntries() != 0)
-        //{
-        //    TCanvas * can1 = new TCanvas();
-        //    can1->Divide(3,2);
-        //    can1->cd(1);
-        //    XYPlane_allhits->SetStats(0);
-        //    XYPlane_allhits->Draw("colz");
-        //    can1->cd(2);
-        //    XZPlane_allhits->SetStats(0);
-        //    XZPlane_allhits->Draw("colz");
-        //    can1->cd(3);
-        //    YZPlane_allhits->SetStats(0);
-        //    YZPlane_allhits->Draw("colz");
+        //    gStyle->SetFrameFillColor(1);
+        //    if(XYPlane_allhits->GetEntries() != 0)
+        //    {
+        //        TCanvas * can1 = new TCanvas();
+        //        can1->Divide(3,2);
+        //        can1->cd(1);
+        //        XYPlane_allhits->SetStats(0);
+        //        XYPlane_allhits->Draw("colz");
+        //        can1->cd(2);
+        //        XZPlane_allhits->SetStats(0);
+        //        XZPlane_allhits->Draw("colz");
+        //        can1->cd(3);
+        //        YZPlane_allhits->SetStats(0);
+        //        YZPlane_allhits->Draw("colz");
 
-        //    can1->cd(4);
-        //    cube_XYPlane->SetStats(0);
-        //    cube_XYPlane->Draw("colz");
-        //    can1->cd(5);
-        //    cube_XZPlane->SetStats(0);
-        //    cube_XZPlane->Draw("colz");
-        //    can1->cd(6);
-        //    cube_YZPlane->SetStats(0);
-        //    cube_YZPlane->Draw("colz");
-        //    can1->SaveAs(Form("cube_eventview_%d.pdf",event));
-        //    can1->Clear();
+        //        can1->cd(4);
+        //        cube_XYPlane->SetStats(0);
+        //        cube_XYPlane->Draw("colz");
+        //        can1->cd(5);
+        //        cube_XZPlane->SetStats(0);
+        //        cube_XZPlane->Draw("colz");
+        //        can1->cd(6);
+        //        cube_YZPlane->SetStats(0);
+        //        cube_YZPlane->Draw("colz");
+        //        can1->SaveAs(Form("cube_eventview_%d.pdf",event));
+        //        can1->Clear();
+        //    }
+        //    XYPlane_allhits->Reset();
+        //    XZPlane_allhits->Reset();
+        //    YZPlane_allhits->Reset();
+        //    cube_XYPlane->Reset();
+        //    cube_XZPlane->Reset();
+        //    cube_YZPlane->Reset();
         //}
-        //XYPlane_allhits->Reset();
-        //XZPlane_allhits->Reset();
-        //YZPlane_allhits->Reset();
-        //cube_XYPlane->Reset();
-        //cube_XZPlane->Reset();
-        //cube_YZPlane->Reset();
-        //}
-        
+
         //select earliest hit 
         Hit earliest_hit;
         earliest_hit = vectorHit.at(0);
@@ -690,60 +691,63 @@ int main()
         if(earliest_hit.GetHitPDG() > 10000)
             continue;
 
-        for(int i = 0; i < 3; i++)
-        {
-            if(i == 0)
-            {
-                vec_piDeath_to_hit[i] = earliest_hit.GetX()-earliest_hit.piDeath[i];
-                vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxX();
-                vec_protonDeath_to_hit[i] = earliest_hit.GetX()-earliest_hit.protonDeath[i];
-                vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxX();
-            }
-            if(i == 1)
-            {
-                vec_piDeath_to_hit[i] = earliest_hit.GetY()-earliest_hit.piDeath[i];
-                vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxY();
-                vec_protonDeath_to_hit[i] = earliest_hit.GetY()-earliest_hit.protonDeath[i];
-                vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxY();
-            }
-            if(i == 2)
-            {
-                vec_piDeath_to_hit[i] = earliest_hit.GetZ()-earliest_hit.piDeath[i];
-                vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxZ();
-                vec_protonDeath_to_hit[i] = earliest_hit.GetZ()-earliest_hit.protonDeath[i];
-                vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxZ();
-            }
-        }
+        parentPDG = earliest_hit.GetParentPdg();
+        //cout<<"parentPDG: "<<parentPDG<<endl;
 
-        float vec_vtx_to_hit[3];
-        vec_vtx_to_hit[0] = earliest_hit.GetX() - earliest_hit.GetVtxX();
-        vec_vtx_to_hit[1] = earliest_hit.GetY() - earliest_hit.GetVtxY();
-        vec_vtx_to_hit[2] = earliest_hit.GetZ() - earliest_hit.GetVtxZ();
+        //for(int i = 0; i < 3; i++)
+        //{
+        //    if(i == 0)
+        //    {
+        //        vec_piDeath_to_hit[i] = earliest_hit.GetX()-earliest_hit.piDeath[i];
+        //        vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxX();
+        //        vec_protonDeath_to_hit[i] = earliest_hit.GetX()-earliest_hit.protonDeath[i];
+        //        vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxX();
+        //    }
+        //    if(i == 1)
+        //    {
+        //        vec_piDeath_to_hit[i] = earliest_hit.GetY()-earliest_hit.piDeath[i];
+        //        vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxY();
+        //        vec_protonDeath_to_hit[i] = earliest_hit.GetY()-earliest_hit.protonDeath[i];
+        //        vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxY();
+        //    }
+        //    if(i == 2)
+        //    {
+        //        vec_piDeath_to_hit[i] = earliest_hit.GetZ()-earliest_hit.piDeath[i];
+        //        vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxZ();
+        //        vec_protonDeath_to_hit[i] = earliest_hit.GetZ()-earliest_hit.protonDeath[i];
+        //        vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxZ();
+        //    }
+        //}
+
+        //float vec_vtx_to_hit[3];
+        //vec_vtx_to_hit[0] = earliest_hit.GetX() - earliest_hit.GetVtxX();
+        //vec_vtx_to_hit[1] = earliest_hit.GetY() - earliest_hit.GetVtxY();
+        //vec_vtx_to_hit[2] = earliest_hit.GetZ() - earliest_hit.GetVtxZ();
 
         //signal
         if(earliest_hit.GetCategory() == 1)
         {
             leverarm_signal->Fill(earliest_hit.GetLeverArm());
             leverArm = earliest_hit.GetLeverArm();
-            if(_1pi0p)
-            {
-                angle_signal->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-                angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-                distance_signal->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-                distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
-            }
-            if(_0pi1p)
-            {
-                angle_signal->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-                angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-                distance_signal->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-                distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-            }
-            if(_0pi0p)
-            {
-                angle = -1000;
-                distanceCHit = -1000;
-            }
+            //if(_1pi0p)
+            //{
+            //    angle_signal->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
+            //    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
+            //    distance_signal->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
+            //    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
+            //}
+            //if(_0pi1p)
+            //{
+            //    angle_signal->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
+            //    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
+            //    distance_signal->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
+            //    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
+            //}
+            //if(_0pi0p)
+            //{
+            //    angle = -1000;
+            //    distanceCHit = -1000;
+            //}
 
             beta_signal->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
             beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
@@ -758,9 +762,10 @@ int main()
             nCubeDis_signal->Fill(cube_cluster.size());
             nCube = cube_cluster.size();
             hitPDG = earliest_hit.GetHitPDG();
+            clusterEnergy_signal->Fill(energy_deposit_in_cluster);
 
             neutronE = earliest_hit.GetTrueE();
-            neutronAngle = GetAngle(Z,vec_vtx_to_hit);
+            //neutronAngle = GetAngle(Z,vec_vtx_to_hit);
         }
 
         //secondary neutron
@@ -768,25 +773,25 @@ int main()
         {
             leverarm_secondary_neutron->Fill(earliest_hit.GetLeverArm());
             leverArm = earliest_hit.GetLeverArm();
-            if(_1pi0p)
-            {
-                angle_secondary_neutron->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-                angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-                distance_secondary_neutron->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-                distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
-            }
-            if(_0pi1p)
-            {
-                angle_secondary_neutron->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-                angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-                distance_secondary_neutron->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-                distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-            }
-            if(_0pi0p)
-            {
-                angle = -1000;
-                distanceCHit = -1000;
-            }
+            //if(_1pi0p)
+            //{
+            //    angle_secondary_neutron->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
+            //    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
+            //    distance_secondary_neutron->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
+            //    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
+            //}
+            //if(_0pi1p)
+            //{
+            //    angle_secondary_neutron->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
+            //    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
+            //    distance_secondary_neutron->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
+            //    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
+            //}
+            //if(_0pi0p)
+            //{
+            //    angle = -1000;
+            //    distanceCHit = -1000;
+            //}
             beta_secondary_neutron->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
             beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
             TOF_secondary_neutron->Fill(earliest_hit.GetTOF());
@@ -800,9 +805,10 @@ int main()
             nCubeDis_secondary_neutron->Fill(cube_cluster.size());
             nCube = cube_cluster.size();
             hitPDG = earliest_hit.GetHitPDG();
+            clusterEnergy_secondary_neutron->Fill(energy_deposit_in_cluster);
 
             neutronE = earliest_hit.GetTrueE();
-            neutronAngle = GetAngle(Z,vec_vtx_to_hit);
+            //neutronAngle = GetAngle(Z,vec_vtx_to_hit);
         }
 
         //primary gamma 
@@ -810,25 +816,25 @@ int main()
         {
             leverarm_primary_gamma->Fill(earliest_hit.GetLeverArm());
             leverArm = earliest_hit.GetLeverArm();
-            if(_1pi0p)
-            {
-                angle_primary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-                angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-                distance_primary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-                distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
-            }
-            if(_0pi1p)
-            {
-                angle_primary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-                angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-                distance_primary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-                distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-            }
-            if(_0pi0p)
-            {
-                angle = -1000;
-                distanceCHit = -1000;
-            }
+            //if(_1pi0p)
+            //{
+            //    angle_primary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
+            //    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
+            //    distance_primary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
+            //    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
+            //}
+            //if(_0pi1p)
+            //{
+            //    angle_primary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
+            //    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
+            //    distance_primary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
+            //    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
+            //}
+            //if(_0pi0p)
+            //{
+            //    angle = -1000;
+            //    distanceCHit = -1000;
+            //}
             beta_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity);
             beta = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity;
             TOF_primary_gamma->Fill(earliest_hit.GetTOF());
@@ -842,6 +848,7 @@ int main()
             nCubeDis_primary_gamma->Fill(cube_cluster.size());
             nCube = cube_cluster.size();
             hitPDG = earliest_hit.GetHitPDG();
+            clusterEnergy_primary_gamma->Fill(energy_deposit_in_cluster);
         }
 
         //secondary gamma
@@ -849,25 +856,25 @@ int main()
         {
             leverarm_secondary_gamma->Fill(earliest_hit.GetLeverArm());
             leverArm = earliest_hit.GetLeverArm();
-            if(_1pi0p)
-            {
-                angle_secondary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-                angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-                distance_secondary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-                distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
-            }
-            if(_0pi1p)
-            {
-                angle_secondary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-                angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-                distance_secondary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-                distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-            }
-            if(_0pi0p)
-            {
-                angle = -1000;
-                distanceCHit = -1000;
-            }
+            //if(_1pi0p)
+            //{
+            //    angle_secondary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
+            //    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
+            //    distance_secondary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
+            //    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
+            //}
+            //if(_0pi1p)
+            //{
+            //    angle_secondary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
+            //    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
+            //    distance_secondary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
+            //    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
+            //}
+            //if(_0pi0p)
+            //{
+            //    angle = -1000;
+            //    distanceCHit = -1000;
+            //}
             beta_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
             beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
             TOF_secondary_gamma->Fill(earliest_hit.GetTOF());
@@ -882,6 +889,7 @@ int main()
             nCube = cube_cluster.size();
             hitPDG = earliest_hit.GetHitPDG();
             secondary_gamma_parentID->Fill(earliest_hit.GetPDG());
+            clusterEnergy_secondary_gamma->Fill(energy_deposit_in_cluster);
         }
         //transverse momentum
         float Px = 0;
@@ -1365,6 +1373,57 @@ int main()
 
     legend->Draw();
     can->SaveAs("nCubeDis.pdf");
+    can->Clear();
+    //}
+
+    //clusterEnergy{
+    clusterEnergy_signal->Write();
+    clusterEnergy_signal->GetXaxis()->SetTitle("cluster energy");
+    clusterEnergy_signal->GetYaxis()->SetTitle("Normalized fraction");
+    clusterEnergy_signal->GetYaxis()->CenterTitle(1);
+    clusterEnergy_signal->GetXaxis()->SetLabelSize(0.045);
+    clusterEnergy_signal->GetYaxis()->SetLabelSize(0.045);
+    clusterEnergy_signal->GetXaxis()->SetTitleSize(0.060);
+    clusterEnergy_signal->GetYaxis()->SetTitleSize(0.055);
+    clusterEnergy_signal->GetYaxis()->SetTitleOffset(0.9);
+    clusterEnergy_signal->GetXaxis()->SetTitleOffset(0.70);
+    clusterEnergy_signal->GetYaxis()->SetRangeUser(0,0.5);
+    clusterEnergy_signal->SetLineColor(2);
+    clusterEnergy_signal->SetLineColor(2);
+    clusterEnergy_signal->SetLineWidth(3);
+    clusterEnergy_signal->SetStats(0);
+    clusterEnergy_signal->Scale(1/clusterEnergy_signal->Integral(),"nosw2");
+    clusterEnergy_signal->GetXaxis()->SetTitle("cluster energy [MeV]");
+    clusterEnergy_signal->GetYaxis()->SetRangeUser(0,0.5);
+    clusterEnergy_signal->SetTitle("cluster energy");
+    clusterEnergy_signal->Draw();
+
+    clusterEnergy_secondary_neutron->Write();
+    clusterEnergy_secondary_neutron->SetLineColor(4);
+    clusterEnergy_secondary_neutron->SetLineColor(4);
+    clusterEnergy_secondary_neutron->SetLineWidth(3);
+    clusterEnergy_secondary_neutron->SetStats(0);
+    clusterEnergy_secondary_neutron->Scale(1/clusterEnergy_secondary_neutron->Integral(),"nosw2");
+    clusterEnergy_secondary_neutron->Draw("same");
+
+    clusterEnergy_primary_gamma->Write();
+    clusterEnergy_primary_gamma->SetLineColor(6);
+    clusterEnergy_primary_gamma->SetLineColor(6);
+    clusterEnergy_primary_gamma->SetLineWidth(3);
+    clusterEnergy_primary_gamma->SetStats(0);
+    clusterEnergy_primary_gamma->Scale(1/clusterEnergy_primary_gamma->Integral(),"nosw2");
+    clusterEnergy_primary_gamma->Draw("same");
+
+    clusterEnergy_secondary_gamma->Write();
+    clusterEnergy_secondary_gamma->SetLineColor(1);
+    clusterEnergy_secondary_gamma->SetLineColor(1);
+    clusterEnergy_secondary_gamma->SetLineWidth(3);
+    clusterEnergy_secondary_gamma->SetStats(0);
+    clusterEnergy_secondary_gamma->Scale(1/clusterEnergy_secondary_gamma->Integral(),"nosw2");
+    clusterEnergy_secondary_gamma->Draw("same");
+
+    legend->Draw();
+    can->SaveAs("clusterEnergy.pdf");
     can->Clear();
     //}
 

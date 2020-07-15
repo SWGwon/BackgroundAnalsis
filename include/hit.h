@@ -67,6 +67,7 @@ class Hit
         float vtxT;                 // ture T of vertex
         float leverArm;             // lever arm
         float parentId;             // parentId of hit
+        float parentPdg;             // parentPdg of hit
         float cubeE;    //neutron cube energy
         float trueE;    //neutron true energy
         float hitE;    //neutron hit energy
@@ -118,6 +119,9 @@ class Hit
         void SetParentId(float parentId);
         float GetParentId();
 ////////////////////////////////////////////////////////
+        void SetParentPdg(float parentPdg);
+        float GetParentPdg();
+////////////////////////////////////////////////////////
         void SetCubeE(float cubeE);
         float GetCubeE();
 ////////////////////////////////////////////////////////
@@ -154,7 +158,6 @@ class Hit
         bool isFromPion;
         bool isFromProton;
 
-        int parentPdg;   // PDG of parent
 
         Hit():
             timeWindow(-1),

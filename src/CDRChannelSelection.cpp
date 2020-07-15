@@ -103,7 +103,10 @@ int main()
     float t_nuEnergy; tree.SetBranchAddress("nuEnergy",&t_nuEnergy);
 
 
-    TFile * outfile = new TFile("CDR_CC_1pi0.root","RECREATE");
+    //TFile * outfile = new TFile("CDR_CC_nothing.root","RECREATE");
+    //TFile * outfile = new TFile("CDR_CC0pi+-0P.root","RECREATE");
+    //TFile * outfile = new TFile("CDR_CC_1pi0.root","RECREATE");
+    TFile * outfile = new TFile("NC1pi0P0Nypi0+CC0pi0PxNypi0.root","RECREATE");
     TTree * output_tree = tree.CloneTree(0);
 
     cout<<"file loading is done"<<endl;
@@ -123,9 +126,22 @@ int main()
 
         //check whether it's CC event or not
         bool is_CC = false;
+        bool is_NC = false;
         int num_pi = 0;
         int num_pi0 = 0;
         int num_proton = 0;
+        int num_neutron = 0;
+        
+        int num_all_muon = 0;
+        for(int inFS = 0; inFS < t_nFS; inFS++)
+        {
+            if(abs(t_fsPdg[inFS]) == 13)    //muonPDG=13
+            {
+                num_all_muon++;
+            }
+        }
+        if(num_all_muon == 0)
+            is_NC = true;
         for(int inFS = 0; inFS < t_nFS; inFS++)
         {
             if(t_fsPdg[inFS] == -13)    //anti muonPDG=13
@@ -144,20 +160,19 @@ int main()
             {
                 num_proton++;
             }
+            if(t_fsPdg[inFS] == 2112)
+            {
+                num_neutron++;
+            }
             if(abs(t_fsPdg[inFS]) == 211)    //pionPDG=+-211
             {
                 num_pi++;
             }
         }
-        if(!is_CC)
-            continue;
-        if(num_pi0 != 1)
-            continue;
-        if(num_proton != 0)
-            continue;
-        if(num_pi != 0)
-            continue;
-        output_tree->Fill();
+        if(is_CC && num_proton == 0 && num_neutron > 0 && num_pi == 0)
+            output_tree->Fill();
+        if(is_NC && num_pi == 1 & num_proton == 0 & num_neutron == 0)
+            output_tree->Fill();
     }
     //output_tree->Print();
     outfile->Write();
