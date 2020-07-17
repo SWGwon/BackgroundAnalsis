@@ -179,12 +179,14 @@ int TMVAClassification_3DSTneutron( TString myMethodList = "" )
    // [all types of expressions that can also be parsed by TTree::Draw( "expression" )]
 
    dataloader->AddVariable( "leverArm:=leverArm", "leverArm", "units",  'F' );
-   dataloader->AddVariable( "angle:=angle", "angle", "units", 'F' );
-   dataloader->AddVariable( "beta:=beta", "beta", "units", 'F' );
-   dataloader->AddVariable( "distanceCHit:=distanceCHit", "distanceCHit", "units", 'F' );
-   dataloader->AddVariable( "tof:=tof", "tof", "units", 'F' );
-   dataloader->AddVariable( "cubeE:=cubeE", "cubeE", "units", 'F' );
+   //dataloader->AddVariable( "angle:=angle", "angle", "units", 'F' ); 
+   //dataloader->AddVariable( "beta:=beta", "beta", "units", 'F' );
+   //dataloader->AddVariable( "distanceCHit:=distanceCHit", "distanceCHit", "units", 'F' );
+   //dataloader->AddVariable( "tof:=tof", "tof", "units", 'F' );
+   dataloader->AddVariable( "tofSmear:=tofSmear", "tofSmear", "units", 'F' );
+   //dataloader->AddVariable( "cubeE:=cubeE", "cubeE", "units", 'F' );
    dataloader->AddVariable( "nCube:=nCube", "nCube", "units", 'F' );     //what I added
+   dataloader->AddVariable( "energy_deposit_in_cluster:=energy_deposit_in_cluster",  "energy_deposit_in_cluster", "units", 'F' );
 
    // You can add so-called "Spectator variables", which are not used in the MVA training,
    // but will appear in the final "TestTree" produced by TMVA. This TestTree will contain the
@@ -203,6 +205,7 @@ int TMVAClassification_3DSTneutron( TString myMethodList = "" )
    dataloader->AddSpectator( "channel:=channel",  "channel", "units", 'F' );
    dataloader->AddSpectator( "protonMomentum:=protonMomentum",  "protonMomentum", "units", 'F' );
    dataloader->AddSpectator( "pionMomentum:=pionMomentum",  "pionMomentum", "units", 'F' );
+   dataloader->AddSpectator( "parentPDG:=parentPDG",  "parentPDG", "units", 'F' );
 
    // global event weights per tree (see below for setting event-wise weights)
    Double_t signalWeight     = 1.0;
@@ -214,16 +217,15 @@ int TMVAClassification_3DSTneutron( TString myMethodList = "" )
 
    // Apply additional cuts on the signal and background samples (can be different)
    TCut myCommonCut = "";
-   TCut mycuts = "category == 1  " && myCommonCut;
-   TCut mycutb = "category > 1  " && myCommonCut;
-   //TCut mycutb = "CubeE > 1  " && myCommonCut;
+   TCut mycuts = "category < 3" && myCommonCut;
+   TCut mycutb = "category > 2" && myCommonCut;
 
    // Tell the dataloader how to use the training and testing events
    //
    // If no numbers of events are given, half of the events in the tree are used
    // for training, and the other half for testing:
-   dataloader->PrepareTrainingAndTestTree( mycuts, mycutb,"SplitMode=Random:!V" );
-                                        //"nTrain_Signal=1000:nTrain_Background=1000:SplitMode=Random:NormMode=NumEvents:!V" );
+     dataloader->PrepareTrainingAndTestTree( mycuts, mycutb, "SplitMode=random:!V" );
+   //dataloader->PrepareTrainingAndTestTree( mycuts, mycutb, "nTrain_Signal=2000:nTrain_Background=1000:SplitMode=Random:NormMode=NumEvents:!V" );
 
 
    cout<<"Booking MVA methods.. "<<endl;

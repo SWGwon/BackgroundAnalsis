@@ -115,43 +115,123 @@ int main()
     cout<<"event loop starts"<<endl;
     cout<<endl;
 
+    int CC0pi0pxnypi0 = 0;
+    int NC1pi0p0nypi0 = 0;
+    int CC0pi0pxn0pi0 = 0;
+    int NC1pi0p1n0pi0 = 0;
+
     for(int i = 0; i < tree.GetEntries(); i++)
     {
         tree.GetEntry(i);
         cout<<"\033[1Aevent: "<<((double)i*100/tree.GetEntries())<<"%          \033[1000D"<<endl;
+        //bool fraction_is_NC = false;
+        //int fraction_num_pi = 0;
+        //int fraction_num_pi0 = 0;
+        //int fraction_num_proton = 0;
+        //int fraction_num_neutron = 0;
+        //int fraction_num_all_muon = 0;
+        //for(int inFS = 0; inFS < t_nFS; inFS++)
+        //{
+        //    if(abs(t_fsPdg[inFS]) == 13)    //muonPDG=13
+        //    {
+        //        fraction_num_all_muon++;
+        //    }
+        //}
+        //if(fraction_num_all_muon == 0)
+        //    fraction_is_NC = true;
+        //for(int inFS = 0; inFS < t_nFS; inFS++)
+        //{
+        //    if(abs(t_fsPdg[inFS]) == 111)    //pion0PDG=111
+        //    {
+        //        fraction_num_pi0++;
+        //    }
+        //    if(t_fsPdg[inFS] == 2212)
+        //    {
+        //        fraction_num_proton++;
+        //    }
+        //    if(t_fsPdg[inFS] == 2112)
+        //    {
+        //        fraction_num_neutron++;
+        //    }
+        //    if(abs(t_fsPdg[inFS]) == 211)    //pionPDG=+-211
+        //    {
+        //        fraction_num_pi++;
+        //    }
+        //}
+        //if(fraction_is_NC && fraction_num_neutron == 1)
+        //    num_NC1pi1N++;
 
-        //out of fiducial volume
-        if(abs(t_vtx[0]) > 50 || abs(t_vtx[1]) > 50 || abs(t_vtx[2]) > 50)
-            continue;
+        ////out of fiducial volume
+        //if(abs(t_vtx[0]) > 50 || abs(t_vtx[1]) > 50 || abs(t_vtx[2]) > 50)
+        //    continue;
 
-        //check whether it's CC event or not
-        bool is_CC = false;
-        bool is_NC = false;
+        ////check whether it's CC event or not
+        //bool is_CC = false;
+        //bool is_NC = false;
+        //int num_pi = 0;
+        //int num_pi0 = 0;
+        //int num_proton = 0;
+        //int num_neutron = 0;
+        //
+        //int num_all_muon = 0;
+        //for(int inFS = 0; inFS < t_nFS; inFS++)
+        //{
+        //    if(abs(t_fsPdg[inFS]) == 13)    //muonPDG=13
+        //    {
+        //        num_all_muon++;
+        //    }
+        //}
+        //if(num_all_muon == 0)
+        //    is_NC = true;
+        //for(int inFS = 0; inFS < t_nFS; inFS++)
+        //{
+        //    if(t_fsPdg[inFS] == -13)    //anti muonPDG=13
+        //    {
+        //        is_CC = true;
+        //        break;
+        //    }
+        //}
+        //for(int inFS = 0; inFS < t_nFS; inFS++)
+        //{
+        //    if(abs(t_fsPdg[inFS]) == 111)    //pion0PDG=111
+        //    {
+        //        num_pi0++;
+        //    }
+        //    if(t_fsPdg[inFS] == 2212)
+        //    {
+        //        num_proton++;
+        //    }
+        //    if(t_fsPdg[inFS] == 2112)
+        //    {
+        //        num_neutron++;
+        //    }
+        //    if(abs(t_fsPdg[inFS]) == 211)    //pionPDG=+-211
+        //    {
+        //        num_pi++;
+        //    }
+        //}
+        //if(is_CC && num_proton == 0 && num_neutron > 0 && num_pi == 0)
+        //    output_tree->Fill();
+        //if(is_NC && num_pi == 1 & num_proton == 0 & num_neutron == 0)
+        //    output_tree->Fill();
+        int num_anti_muon = 0;
+        int num_all_muon = 0;
         int num_pi = 0;
-        int num_pi0 = 0;
         int num_proton = 0;
         int num_neutron = 0;
-        
-        int num_all_muon = 0;
-        for(int inFS = 0; inFS < t_nFS; inFS++)
-        {
-            if(abs(t_fsPdg[inFS]) == 13)    //muonPDG=13
-            {
-                num_all_muon++;
-            }
-        }
-        if(num_all_muon == 0)
-            is_NC = true;
+        int num_pi0 = 0;
+        bool is_CC = false;
+        bool is_NC = false;
         for(int inFS = 0; inFS < t_nFS; inFS++)
         {
             if(t_fsPdg[inFS] == -13)    //anti muonPDG=13
             {
-                is_CC = true;
-                break;
+                num_anti_muon++;
             }
-        }
-        for(int inFS = 0; inFS < t_nFS; inFS++)
-        {
+            if(abs(t_fsPdg[inFS]) == 13)    //muonPDG=13
+            {
+                num_all_muon++;
+            }
             if(abs(t_fsPdg[inFS]) == 111)    //pion0PDG=111
             {
                 num_pi0++;
@@ -169,13 +249,25 @@ int main()
                 num_pi++;
             }
         }
-        if(is_CC && num_proton == 0 && num_neutron > 0 && num_pi == 0)
-            output_tree->Fill();
-        if(is_NC && num_pi == 1 & num_proton == 0 & num_neutron == 0)
-            output_tree->Fill();
+        if(num_anti_muon > 0)
+            is_CC = true;
+        if(num_all_muon == 0)
+            is_NC = true;
+        if(is_CC && num_pi == 0 && num_proton == 0 && num_neutron > 0)
+            CC0pi0pxnypi0++;
+        if(is_NC && num_pi == 1 && num_proton == 0 && num_neutron == 0)
+            NC1pi0p0nypi0++;
+        if(is_CC && num_pi == 0 && num_proton == 0 && num_neutron > 0 && num_pi0 == 0)
+            CC0pi0pxn0pi0++;
+        if(is_NC && num_pi == 1 && num_proton == 0 && num_neutron == 1 && num_pi0 == 0)
+            NC1pi0p1n0pi0++;
     }
     //output_tree->Print();
-    outfile->Write();
+    //outfile->Write();
+    cout<<"CC0pi+-0pxnypi0 event: "<<CC0pi0pxnypi0<<endl;
+    cout<<"NC1pi+-0p0nypi0 event: "<<NC1pi0p0nypi0<<endl;
+    cout<<"CC0pi+-0pxn0pi0 event: "<<CC0pi0pxn0pi0<<endl;
+    cout<<"NC1pi+-0p1n0pi0 event: "<<NC1pi0p1n0pi0<<endl;
 
     return 0;
 }

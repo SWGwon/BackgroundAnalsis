@@ -449,7 +449,7 @@ int main()
 
         Hit temp_gamma_Hit;
 
-        for(int n_gammaHit = 0; n_gammaHit < 1000; n_gammaHit++)
+        //for(int n_gammaHit = 0; n_gammaHit < 1000; n_gammaHit++)
         {
             //out of 3dst
             if(abs(t_gammaHitX[n_gammaHit]) > 120 || 
@@ -573,6 +573,8 @@ int main()
 
         //push back the first hit
         cube_cluster.push_back(vectorHit.at(0));
+        energy_deposit_in_cluster += vectorHit.at(0).GetCubeE();
+
         //erase that hit from cube_fired vector
         cube_fired.erase(std::make_tuple(cube_cluster.at(0).GetX(),cube_cluster.at(0).GetY(),cube_cluster.at(0).GetZ()));
         //cout<<"first hit: "<<cube_cluster.at(0).GetX()<<" ,"<<cube_cluster.at(0).GetY()<<" ,"<<cube_cluster.at(0).GetZ()<<", "<<cube_cluster.at(0).GetT()<<endl;
