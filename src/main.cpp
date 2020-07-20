@@ -5,6 +5,11 @@ using namespace std;
 
 int main()
 {
+    bool channel_separate = true;
+    bool include_gammaHit = true;
+    bool include_neutronHit = true;
+    bool using_Cpoint = true;
+
     gErrorIgnoreLevel = 6000;
     float Z[3] = {0,0,1};
     //
@@ -95,8 +100,8 @@ int main()
     //tree.Add("/Users/gwon/BackgroundAnalysis/CDR_doublecheck/CDR_CC0pi+-0P.root");
     //tree.Add("/Users/gwon/BackgroundAnalysis/CDR/CC0pi+-0P/CDR_CC0pi+-0P.root");
     //tree.Add("/Users/gwon/BackgroundAnalysis/CDR/CCnothing/CDR_CC_nothing.root");
-    //tree.Add("/Users/gwon/BackgroundAnalysis/data/CC_selected.root");
-    tree.Add("./NC*.root");
+    tree.Add("/Users/gwon/BackgroundAnalysis/data/CC_selected.root");
+    //tree.Add("./NC*.root");
 
     //vectors I defined
     float vec_piDeath_to_hit[3];
@@ -308,8 +313,8 @@ int main()
             channel = 0;
         }
 
-        //if(!_1pi0p && !_0pi1p && !_0pi0p)
-        //    continue;
+        if(!_1pi0p && !_0pi1p && !_0pi0p)
+            continue;
 
         float muon_momentum[3];
         float proton_momentum[3];
@@ -348,188 +353,193 @@ int main()
         //    cout<<"----------------------"<<endl;
         //}
 
-        //if(num_muon != 1)
-        //    continue;
+        if(num_muon != 1)
+            continue;
 
         muonAngle = GetAngle(Z,muon_momentum);
         muonMomentum = sqrt(muon_momentum[0]*muon_momentum[0]+muon_momentum[1]*muon_momentum[1]+muon_momentum[2]*muon_momentum[2]);
         protonMomentum = sqrt(proton_momentum[0]*proton_momentum[0]+proton_momentum[1]*proton_momentum[1]+proton_momentum[2]*proton_momentum[2]);
         pionMomentum = sqrt(pion_momentum[0]*pion_momentum[0]+pion_momentum[1]*pion_momentum[1]+pion_momentum[2]*pion_momentum[2]);
 
-        Hit temp_neutron_Hit;   
         std::vector<Hit> vectorHit;    //vector of all neutron+gamma hits
 
         //push_back satisying hits to vectorHit
-        for(int n_neutronHit = 0; n_neutronHit < 1000; n_neutronHit++)
+        if(include_neutronHit)
         {
-            //out of 3dst
-            if(abs(t_neutronHitX[n_neutronHit]) > 120 || 
-                    abs(t_neutronHitY[n_neutronHit]) > 120 || 
-                    abs(t_neutronHitZ[n_neutronHit]) > 100)
-                continue;
-
-            //starting point == -1 is default value so remove it
-            if(t_neutronStartingPointX[n_neutronHit] == -1 || 
-                    t_neutronStartingPointY[n_neutronHit] == -1 || 
-                    t_neutronStartingPointZ[n_neutronHit] == -1 )
-                continue;
-
-            //energy threshold
-            if(t_neutronCubeE[n_neutronHit] < energyHitCut || t_neutronCubeE[n_neutronHit] == 0)
-            //if(t_neutronHitE[n_neutronHit] < energyHitCut || t_neutronHitE[n_neutronHit] == 0)
-                continue;
-            neutronE_deposit[n_neutronHit] = t_neutronHitE[n_neutronHit];
-            neutronE_allhits += t_neutronHitE[n_neutronHit];
-
-            //calculate lever arm
-            float leverArm = pow(
-                    pow(t_neutronHitX[n_neutronHit] - t_vtx[0],2)+
-                    pow(t_neutronHitY[n_neutronHit] - t_vtx[1],2)+
-                    pow(t_neutronHitZ[n_neutronHit] - t_vtx[2],2),0.5);
-
-            //calculate signal window; time of flight
-            float tof = t_neutronHitT[n_neutronHit] - t_vtxTime - 1;
-            //float tofSmear = t_neutronHitSmearT[n_neutronHit] - t_vtxTime - 1;
-            float tofSmear = tof + 0.5*gRandom->Gaus(0,1);
-
-            //Fix a bug from edep-sim
-            if(tof == 1)
-                tof = 0.5;
-
-            if(tof > 0)
+            Hit temp_neutron_Hit;   
+            for(int n_neutronHit = 0; n_neutronHit < 1000; n_neutronHit++)
             {
-                temp_neutron_Hit.SetHitE(t_neutronHitE[n_neutronHit]);
-                temp_neutron_Hit.SetTOF(tof);
-                temp_neutron_Hit.SetTOFSmear(tofSmear);
-                temp_neutron_Hit.SetLeverArm(leverArm);
-                temp_neutron_Hit.SetEnergyDeposit(t_neutronHitE[n_neutronHit]);
+                //out of 3dst
+                if(abs(t_neutronHitX[n_neutronHit]) > 120 || 
+                        abs(t_neutronHitY[n_neutronHit]) > 120 || 
+                        abs(t_neutronHitZ[n_neutronHit]) > 100)
+                    continue;
 
-                temp_neutron_Hit.SetVtxX(t_vtx[0]);
-                temp_neutron_Hit.SetVtxY(t_vtx[1]);
-                temp_neutron_Hit.SetVtxZ(t_vtx[2]);
+                //starting point == -1 is default value so remove it
+                if(t_neutronStartingPointX[n_neutronHit] == -1 || 
+                        t_neutronStartingPointY[n_neutronHit] == -1 || 
+                        t_neutronStartingPointZ[n_neutronHit] == -1 )
+                    continue;
 
-                temp_neutron_Hit.piDeath[0] = t_piDeath[0];
-                temp_neutron_Hit.piDeath[1] = t_piDeath[1];
-                temp_neutron_Hit.piDeath[2] = t_piDeath[2];
+                //energy threshold
+                if(t_neutronCubeE[n_neutronHit] < energyHitCut || t_neutronCubeE[n_neutronHit] == 0)
+                    //if(t_neutronHitE[n_neutronHit] < energyHitCut || t_neutronHitE[n_neutronHit] == 0)
+                    continue;
+                neutronE_deposit[n_neutronHit] = t_neutronHitE[n_neutronHit];
+                neutronE_allhits += t_neutronHitE[n_neutronHit];
 
-                temp_neutron_Hit.protonDeath[0] = t_protonDeath[0];
-                temp_neutron_Hit.protonDeath[1] = t_protonDeath[1];
-                temp_neutron_Hit.protonDeath[2] = t_protonDeath[2];
+                //calculate lever arm
+                float leverArm = pow(
+                        pow(t_neutronHitX[n_neutronHit] - t_vtx[0],2)+
+                        pow(t_neutronHitY[n_neutronHit] - t_vtx[1],2)+
+                        pow(t_neutronHitZ[n_neutronHit] - t_vtx[2],2),0.5);
 
-                temp_neutron_Hit.SetTrueT(t_neutronHitT[n_neutronHit]);
-                temp_neutron_Hit.SetTrueE(t_neutronTrueE[n_neutronHit]);
-                temp_neutron_Hit.SetCubeE(t_neutronCubeE[n_neutronHit]);
+                //calculate signal window; time of flight
+                float tof = t_neutronHitT[n_neutronHit] - t_vtxTime - 1;
+                //float tofSmear = t_neutronHitSmearT[n_neutronHit] - t_vtxTime - 1;
+                float tofSmear = tof + 0.5*gRandom->Gaus(0,1);
 
-                temp_neutron_Hit.SetParentId(t_neutronParentId[n_neutronHit]);
-                temp_neutron_Hit.SetParentPdg(t_neutronParentPDG[n_neutronHit]);
-                temp_neutron_Hit.SetHitPDG(t_neutronHitPDG[n_neutronHit]);
+                //Fix a bug from edep-sim
+                if(tof == 1)
+                    tof = 0.5;
 
-                temp_neutron_Hit.SetVtxT(t_vtxTime);
-                if(t_neutronStartingPointX[n_neutronHit] == t_piDeath[0])
-                    temp_neutron_Hit.isFromPion = 1;
-                else
-                    temp_neutron_Hit.isFromPion = 0;
-                if(t_neutronStartingPointX[n_neutronHit] == t_protonDeath[0])
-                    temp_neutron_Hit.isFromProton = 1;
-                else
-                    temp_neutron_Hit.isFromProton = 0;
-                temp_neutron_Hit.SetT(t_neutronHitT[n_neutronHit]);
-                //temp_neutron_Hit.SetTSmear(t_neutronHitSmearT[n_neutronHit]);
-                temp_neutron_Hit.SetTSmear(t_neutronHitT[n_neutronHit]+0.5*gRandom->Gaus(0,1));
-                temp_neutron_Hit.SetX(t_neutronHitX[n_neutronHit]);
-                temp_neutron_Hit.SetY(t_neutronHitY[n_neutronHit]);
-                temp_neutron_Hit.SetZ(t_neutronHitZ[n_neutronHit]);
-                temp_neutron_Hit.SetParentId(t_neutronParentId[n_neutronHit]);
-                temp_neutron_Hit.SetIsNeutron(true);
-                temp_neutron_Hit.SetCubeE(t_neutronCubeE[n_neutronHit]);
+                if(tof > 0)
+                {
+                    temp_neutron_Hit.SetHitE(t_neutronHitE[n_neutronHit]);
+                    temp_neutron_Hit.SetTOF(tof);
+                    temp_neutron_Hit.SetTOFSmear(tofSmear);
+                    temp_neutron_Hit.SetLeverArm(leverArm);
+                    temp_neutron_Hit.SetEnergyDeposit(t_neutronHitE[n_neutronHit]);
 
-                vectorHit.push_back(temp_neutron_Hit);
+                    temp_neutron_Hit.SetVtxX(t_vtx[0]);
+                    temp_neutron_Hit.SetVtxY(t_vtx[1]);
+                    temp_neutron_Hit.SetVtxZ(t_vtx[2]);
+
+                    temp_neutron_Hit.piDeath[0] = t_piDeath[0];
+                    temp_neutron_Hit.piDeath[1] = t_piDeath[1];
+                    temp_neutron_Hit.piDeath[2] = t_piDeath[2];
+
+                    temp_neutron_Hit.protonDeath[0] = t_protonDeath[0];
+                    temp_neutron_Hit.protonDeath[1] = t_protonDeath[1];
+                    temp_neutron_Hit.protonDeath[2] = t_protonDeath[2];
+
+                    temp_neutron_Hit.SetTrueT(t_neutronHitT[n_neutronHit]);
+                    temp_neutron_Hit.SetTrueE(t_neutronTrueE[n_neutronHit]);
+                    temp_neutron_Hit.SetCubeE(t_neutronCubeE[n_neutronHit]);
+
+                    temp_neutron_Hit.SetParentId(t_neutronParentId[n_neutronHit]);
+                    temp_neutron_Hit.SetParentPdg(t_neutronParentPDG[n_neutronHit]);
+                    temp_neutron_Hit.SetHitPDG(t_neutronHitPDG[n_neutronHit]);
+
+                    temp_neutron_Hit.SetVtxT(t_vtxTime);
+                    if(t_neutronStartingPointX[n_neutronHit] == t_piDeath[0])
+                        temp_neutron_Hit.isFromPion = 1;
+                    else
+                        temp_neutron_Hit.isFromPion = 0;
+                    if(t_neutronStartingPointX[n_neutronHit] == t_protonDeath[0])
+                        temp_neutron_Hit.isFromProton = 1;
+                    else
+                        temp_neutron_Hit.isFromProton = 0;
+                    temp_neutron_Hit.SetT(t_neutronHitT[n_neutronHit]);
+                    //temp_neutron_Hit.SetTSmear(t_neutronHitSmearT[n_neutronHit]);
+                    temp_neutron_Hit.SetTSmear(t_neutronHitT[n_neutronHit]+0.5*gRandom->Gaus(0,1));
+                    temp_neutron_Hit.SetX(t_neutronHitX[n_neutronHit]);
+                    temp_neutron_Hit.SetY(t_neutronHitY[n_neutronHit]);
+                    temp_neutron_Hit.SetZ(t_neutronHitZ[n_neutronHit]);
+                    temp_neutron_Hit.SetParentId(t_neutronParentId[n_neutronHit]);
+                    temp_neutron_Hit.SetIsNeutron(true);
+                    temp_neutron_Hit.SetCubeE(t_neutronCubeE[n_neutronHit]);
+
+                    vectorHit.push_back(temp_neutron_Hit);
+                }
             }
         }
 
-        Hit temp_gamma_Hit;
-
-        //for(int n_gammaHit = 0; n_gammaHit < 1000; n_gammaHit++)
+        if(include_gammaHit)
         {
-            //out of 3dst
-            if(abs(t_gammaHitX[n_gammaHit]) > 120 || 
-                    abs(t_gammaHitY[n_gammaHit]) > 120 || 
-                    abs(t_gammaHitZ[n_gammaHit]) > 100)
-                continue;
-
-            //starting point == -1 is default value so remove it
-            if(t_gammaStartingPointX[n_gammaHit] == -1 || 
-                    t_gammaStartingPointY[n_gammaHit] == -1 || 
-                    t_gammaStartingPointZ[n_gammaHit] == -1 )
-                continue;
-
-            //energy threshold
-            if(t_gammaCubeE[n_gammaHit] < energyHitCut || t_gammaCubeE[n_gammaHit] == 0)
-                //if(t_gammaHitE[n_gammaHit] < energyHitCut || t_gammaHitE[n_gammaHit] == 0)
-                continue;
-
-            //calculate lever arm
-            float leverArm = pow(
-                    pow(t_gammaHitX[n_gammaHit] - t_vtx[0],2)+
-                    pow(t_gammaHitY[n_gammaHit] - t_vtx[1],2)+
-                    pow(t_gammaHitZ[n_gammaHit] - t_vtx[2],2),0.5);
-
-            //calculate signal window; time of flight
-            float tof = t_gammaHitT[n_gammaHit] - t_vtxTime - 1;
-            //float tofSmear = t_gammaHitSmearT[n_gammaHit] - t_vtxTime - 1;
-            float tofSmear = tof + 0.5*gRandom->Gaus(0,1);
-
-            //Fix a bug from edep-sim
-            if(tof == 1)
-                tof = 0.5;
-
-            if(tof > 0)
+            Hit temp_gamma_Hit;
+            for(int n_gammaHit = 0; n_gammaHit < 1000; n_gammaHit++)
             {
-                temp_gamma_Hit.SetHitE(t_gammaHitE[n_gammaHit]);
-                temp_gamma_Hit.SetTOF(tof);
-                temp_gamma_Hit.SetTOFSmear(tofSmear);
-                temp_gamma_Hit.SetLeverArm(leverArm);
-                temp_gamma_Hit.SetEnergyDeposit(t_gammaHitE[n_gammaHit]);
+                //out of 3dst
+                if(abs(t_gammaHitX[n_gammaHit]) > 120 || 
+                        abs(t_gammaHitY[n_gammaHit]) > 120 || 
+                        abs(t_gammaHitZ[n_gammaHit]) > 100)
+                    continue;
 
-                temp_gamma_Hit.SetVtxX(t_vtx[0]);
-                temp_gamma_Hit.SetVtxY(t_vtx[1]);
-                temp_gamma_Hit.SetVtxZ(t_vtx[2]);
+                //starting point == -1 is default value so remove it
+                if(t_gammaStartingPointX[n_gammaHit] == -1 || 
+                        t_gammaStartingPointY[n_gammaHit] == -1 || 
+                        t_gammaStartingPointZ[n_gammaHit] == -1 )
+                    continue;
 
-                temp_gamma_Hit.piDeath[0] = t_piDeath[0];
-                temp_gamma_Hit.piDeath[1] = t_piDeath[1];
-                temp_gamma_Hit.piDeath[2] = t_piDeath[2];
+                //energy threshold
+                if(t_gammaCubeE[n_gammaHit] < energyHitCut || t_gammaCubeE[n_gammaHit] == 0)
+                    //if(t_gammaHitE[n_gammaHit] < energyHitCut || t_gammaHitE[n_gammaHit] == 0)
+                    continue;
 
-                temp_gamma_Hit.protonDeath[0] = t_protonDeath[0];
-                temp_gamma_Hit.protonDeath[1] = t_protonDeath[1];
-                temp_gamma_Hit.protonDeath[2] = t_protonDeath[2];
+                //calculate lever arm
+                float leverArm = pow(
+                        pow(t_gammaHitX[n_gammaHit] - t_vtx[0],2)+
+                        pow(t_gammaHitY[n_gammaHit] - t_vtx[1],2)+
+                        pow(t_gammaHitZ[n_gammaHit] - t_vtx[2],2),0.5);
 
-                temp_gamma_Hit.SetTrueT(t_gammaHitT[n_gammaHit]);
-                temp_gamma_Hit.SetCubeE(t_gammaCubeE[n_gammaHit]);
+                //calculate signal window; time of flight
+                float tof = t_gammaHitT[n_gammaHit] - t_vtxTime - 1;
+                //float tofSmear = t_gammaHitSmearT[n_gammaHit] - t_vtxTime - 1;
+                float tofSmear = tof + 0.5*gRandom->Gaus(0,1);
 
-                temp_gamma_Hit.SetParentId(t_gammaParentId[n_gammaHit]);
-                temp_gamma_Hit.SetParentPdg(t_gammaParentPDG[n_gammaHit]);
-                temp_gamma_Hit.SetHitPDG(t_gammaHitPDG[n_gammaHit]);
+                //Fix a bug from edep-sim
+                if(tof == 1)
+                    tof = 0.5;
 
-                temp_gamma_Hit.SetVtxT(t_vtxTime);
-                if(t_gammaStartingPointX[n_gammaHit] == t_piDeath[0])
-                    temp_gamma_Hit.isFromPion = 1;
-                else
-                    temp_gamma_Hit.isFromPion = 0;
-                if(t_gammaStartingPointX[n_gammaHit] == t_protonDeath[0])
-                    temp_gamma_Hit.isFromProton = 1;
-                else
-                    temp_gamma_Hit.isFromProton = 0;
-                temp_gamma_Hit.SetT(t_gammaHitT[n_gammaHit]);
-                //temp_gamma_Hit.SetTSmear(t_gammaHitSmearT[n_gammaHit]);
-                temp_gamma_Hit.SetTSmear(t_gammaHitT[n_gammaHit]+0.5*gRandom->Gaus(0,1));
-                temp_gamma_Hit.SetX(t_gammaHitX[n_gammaHit]);
-                temp_gamma_Hit.SetY(t_gammaHitY[n_gammaHit]);
-                temp_gamma_Hit.SetZ(t_gammaHitZ[n_gammaHit]);
-                temp_gamma_Hit.SetParentId(t_gammaParentId[n_gammaHit]);
-                temp_gamma_Hit.SetIsGamma(true);
-                temp_gamma_Hit.SetCubeE(t_gammaCubeE[n_gammaHit]);
+                if(tof > 0)
+                {
+                    temp_gamma_Hit.SetHitE(t_gammaHitE[n_gammaHit]);
+                    temp_gamma_Hit.SetTOF(tof);
+                    temp_gamma_Hit.SetTOFSmear(tofSmear);
+                    temp_gamma_Hit.SetLeverArm(leverArm);
+                    temp_gamma_Hit.SetEnergyDeposit(t_gammaHitE[n_gammaHit]);
 
-                vectorHit.push_back(temp_gamma_Hit);
+                    temp_gamma_Hit.SetVtxX(t_vtx[0]);
+                    temp_gamma_Hit.SetVtxY(t_vtx[1]);
+                    temp_gamma_Hit.SetVtxZ(t_vtx[2]);
+
+                    temp_gamma_Hit.piDeath[0] = t_piDeath[0];
+                    temp_gamma_Hit.piDeath[1] = t_piDeath[1];
+                    temp_gamma_Hit.piDeath[2] = t_piDeath[2];
+
+                    temp_gamma_Hit.protonDeath[0] = t_protonDeath[0];
+                    temp_gamma_Hit.protonDeath[1] = t_protonDeath[1];
+                    temp_gamma_Hit.protonDeath[2] = t_protonDeath[2];
+
+                    temp_gamma_Hit.SetTrueT(t_gammaHitT[n_gammaHit]);
+                    temp_gamma_Hit.SetCubeE(t_gammaCubeE[n_gammaHit]);
+
+                    temp_gamma_Hit.SetParentId(t_gammaParentId[n_gammaHit]);
+                    temp_gamma_Hit.SetParentPdg(t_gammaParentPDG[n_gammaHit]);
+                    temp_gamma_Hit.SetHitPDG(t_gammaHitPDG[n_gammaHit]);
+
+                    temp_gamma_Hit.SetVtxT(t_vtxTime);
+                    if(t_gammaStartingPointX[n_gammaHit] == t_piDeath[0])
+                        temp_gamma_Hit.isFromPion = 1;
+                    else
+                        temp_gamma_Hit.isFromPion = 0;
+                    if(t_gammaStartingPointX[n_gammaHit] == t_protonDeath[0])
+                        temp_gamma_Hit.isFromProton = 1;
+                    else
+                        temp_gamma_Hit.isFromProton = 0;
+                    temp_gamma_Hit.SetT(t_gammaHitT[n_gammaHit]);
+                    //temp_gamma_Hit.SetTSmear(t_gammaHitSmearT[n_gammaHit]);
+                    temp_gamma_Hit.SetTSmear(t_gammaHitT[n_gammaHit]+0.5*gRandom->Gaus(0,1));
+                    temp_gamma_Hit.SetX(t_gammaHitX[n_gammaHit]);
+                    temp_gamma_Hit.SetY(t_gammaHitY[n_gammaHit]);
+                    temp_gamma_Hit.SetZ(t_gammaHitZ[n_gammaHit]);
+                    temp_gamma_Hit.SetParentId(t_gammaParentId[n_gammaHit]);
+                    temp_gamma_Hit.SetIsGamma(true);
+                    temp_gamma_Hit.SetCubeE(t_gammaCubeE[n_gammaHit]);
+
+                    vectorHit.push_back(temp_gamma_Hit);
+                }
             }
         }
 
@@ -696,60 +706,63 @@ int main()
         parentPDG = earliest_hit.GetParentPdg();
         //cout<<"parentPDG: "<<parentPDG<<endl;
 
-        //for(int i = 0; i < 3; i++)
-        //{
-        //    if(i == 0)
-        //    {
-        //        vec_piDeath_to_hit[i] = earliest_hit.GetX()-earliest_hit.piDeath[i];
-        //        vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxX();
-        //        vec_protonDeath_to_hit[i] = earliest_hit.GetX()-earliest_hit.protonDeath[i];
-        //        vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxX();
-        //    }
-        //    if(i == 1)
-        //    {
-        //        vec_piDeath_to_hit[i] = earliest_hit.GetY()-earliest_hit.piDeath[i];
-        //        vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxY();
-        //        vec_protonDeath_to_hit[i] = earliest_hit.GetY()-earliest_hit.protonDeath[i];
-        //        vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxY();
-        //    }
-        //    if(i == 2)
-        //    {
-        //        vec_piDeath_to_hit[i] = earliest_hit.GetZ()-earliest_hit.piDeath[i];
-        //        vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxZ();
-        //        vec_protonDeath_to_hit[i] = earliest_hit.GetZ()-earliest_hit.protonDeath[i];
-        //        vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxZ();
-        //    }
-        //}
+        for(int i = 0; i < 3; i++)
+        {
+            if(i == 0)
+            {
+                vec_piDeath_to_hit[i] = earliest_hit.GetX()-earliest_hit.piDeath[i];
+                vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxX();
+                vec_protonDeath_to_hit[i] = earliest_hit.GetX()-earliest_hit.protonDeath[i];
+                vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxX();
+            }
+            if(i == 1)
+            {
+                vec_piDeath_to_hit[i] = earliest_hit.GetY()-earliest_hit.piDeath[i];
+                vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxY();
+                vec_protonDeath_to_hit[i] = earliest_hit.GetY()-earliest_hit.protonDeath[i];
+                vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxY();
+            }
+            if(i == 2)
+            {
+                vec_piDeath_to_hit[i] = earliest_hit.GetZ()-earliest_hit.piDeath[i];
+                vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxZ();
+                vec_protonDeath_to_hit[i] = earliest_hit.GetZ()-earliest_hit.protonDeath[i];
+                vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxZ();
+            }
+        }
 
-        //float vec_vtx_to_hit[3];
-        //vec_vtx_to_hit[0] = earliest_hit.GetX() - earliest_hit.GetVtxX();
-        //vec_vtx_to_hit[1] = earliest_hit.GetY() - earliest_hit.GetVtxY();
-        //vec_vtx_to_hit[2] = earliest_hit.GetZ() - earliest_hit.GetVtxZ();
+        float vec_vtx_to_hit[3];
+        vec_vtx_to_hit[0] = earliest_hit.GetX() - earliest_hit.GetVtxX();
+        vec_vtx_to_hit[1] = earliest_hit.GetY() - earliest_hit.GetVtxY();
+        vec_vtx_to_hit[2] = earliest_hit.GetZ() - earliest_hit.GetVtxZ();
 
         //signal
         if(earliest_hit.GetCategory() == 1)
         {
             leverarm_signal->Fill(earliest_hit.GetLeverArm());
             leverArm = earliest_hit.GetLeverArm();
-            //if(_1pi0p)
-            //{
-            //    angle_signal->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-            //    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-            //    distance_signal->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-            //    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
-            //}
-            //if(_0pi1p)
-            //{
-            //    angle_signal->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-            //    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-            //    distance_signal->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-            //    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-            //}
-            //if(_0pi0p)
-            //{
-            //    angle = -1000;
-            //    distanceCHit = -1000;
-            //}
+            if(channel_separate)
+            {
+                if(_1pi0p)
+                {
+                    angle_signal->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
+                    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
+                    distance_signal->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
+                    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
+                }
+                if(_0pi1p)
+                {
+                    angle_signal->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
+                    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
+                    distance_signal->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
+                    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
+                }
+                if(_0pi0p)
+                {
+                    angle = -1000;
+                    distanceCHit = -1000;
+                }
+            }
 
             beta_signal->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
             beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
@@ -775,25 +788,28 @@ int main()
         {
             leverarm_secondary_neutron->Fill(earliest_hit.GetLeverArm());
             leverArm = earliest_hit.GetLeverArm();
-            //if(_1pi0p)
-            //{
-            //    angle_secondary_neutron->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-            //    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-            //    distance_secondary_neutron->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-            //    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
-            //}
-            //if(_0pi1p)
-            //{
-            //    angle_secondary_neutron->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-            //    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-            //    distance_secondary_neutron->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-            //    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-            //}
-            //if(_0pi0p)
-            //{
-            //    angle = -1000;
-            //    distanceCHit = -1000;
-            //}
+            if(channel_separate)
+            {
+                if(_1pi0p)
+                {
+                    angle_secondary_neutron->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
+                    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
+                    distance_secondary_neutron->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
+                    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
+                }
+                if(_0pi1p)
+                {
+                    angle_secondary_neutron->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
+                    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
+                    distance_secondary_neutron->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
+                    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
+                }
+                if(_0pi0p)
+                {
+                    angle = -1000;
+                    distanceCHit = -1000;
+                }
+            }
             beta_secondary_neutron->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
             beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
             TOF_secondary_neutron->Fill(earliest_hit.GetTOF());
@@ -818,25 +834,28 @@ int main()
         {
             leverarm_primary_gamma->Fill(earliest_hit.GetLeverArm());
             leverArm = earliest_hit.GetLeverArm();
-            //if(_1pi0p)
-            //{
-            //    angle_primary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-            //    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-            //    distance_primary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-            //    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
-            //}
-            //if(_0pi1p)
-            //{
-            //    angle_primary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-            //    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-            //    distance_primary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-            //    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-            //}
-            //if(_0pi0p)
-            //{
-            //    angle = -1000;
-            //    distanceCHit = -1000;
-            //}
+            if(channel_separate)
+            {
+                if(_1pi0p)
+                {
+                    angle_primary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
+                    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
+                    distance_primary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
+                    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
+                }
+                if(_0pi1p)
+                {
+                    angle_primary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
+                    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
+                    distance_primary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
+                    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
+                }
+                if(_0pi0p)
+                {
+                    angle = -1000;
+                    distanceCHit = -1000;
+                }
+            }
             beta_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity);
             beta = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity;
             TOF_primary_gamma->Fill(earliest_hit.GetTOF());
@@ -858,25 +877,28 @@ int main()
         {
             leverarm_secondary_gamma->Fill(earliest_hit.GetLeverArm());
             leverArm = earliest_hit.GetLeverArm();
-            //if(_1pi0p)
-            //{
-            //    angle_secondary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-            //    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-            //    distance_secondary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-            //    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
-            //}
-            //if(_0pi1p)
-            //{
-            //    angle_secondary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-            //    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-            //    distance_secondary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-            //    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-            //}
-            //if(_0pi0p)
-            //{
-            //    angle = -1000;
-            //    distanceCHit = -1000;
-            //}
+            if(channel_separate)
+            {
+                if(_1pi0p)
+                {
+                    angle_secondary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
+                    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
+                    distance_secondary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
+                    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
+                }
+                if(_0pi1p)
+                {
+                    angle_secondary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
+                    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
+                    distance_secondary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
+                    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
+                }
+                if(_0pi0p)
+                {
+                    angle = -1000;
+                    distanceCHit = -1000;
+                }
+            }
             beta_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
             beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
             TOF_secondary_gamma->Fill(earliest_hit.GetTOF());

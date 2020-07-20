@@ -78,7 +78,7 @@ void reco_NuE()
         reco_neutronE = 1.674/1.602*pow(t_leverArm/t_tof,2);    //MeV
         reco_neutronE_smear = 1.674/1.602*pow(t_leverArm/t_tofSmear,2);    //MeV
         smeard_mu_momentum = t_muonMomentum*(1+0.04*gRandom->Gaus(0,1));
-        smeard_pion_momentum = t_pionMomentum*(1+0.04*gRandom->Gaus(0,1));
+        smeard_pion_momentum = t_pionMomentum*(1+0.10*gRandom->Gaus(0,1));
         smeard_proton_momentum = t_protonMomentum*(1+0.10*gRandom->Gaus(0,1));
 
         if(t_channel == 0)
