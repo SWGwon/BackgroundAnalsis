@@ -2,7 +2,6 @@
 
 using namespace std;
 
-//int main()
 int main()
 {
     TChain tree("tree");
@@ -107,15 +106,11 @@ int main()
     {
         tree.GetEntry(i);
         cout<<"\033[1Aevent: "<<((double)i*100/tree.GetEntries())<<"%          \033[1000D"<<endl;
-        //out of fiducial volume
-        if(abs(t_vtx[0]) > 50 || abs(t_vtx[1]) > 50 || abs(t_vtx[2]) > 50)
-            continue;
-
         //check whether it's CC event or not
         bool is_CC = false;
         for(int inFS = 0; inFS < t_nFS; inFS++)
         {
-            if(abs(t_fsPdg[inFS]) == 11 || abs(t_fsPdg[inFS]) == 13)    //electronPDG=11,muonPDG=13
+            if(t_fsPdg[inFS] == -13)    //muonPDG=13
             {
                 is_CC = true;
                 break;
@@ -125,23 +120,9 @@ int main()
         //if it's not CC skip this event
         if(!is_CC)
             continue;
-
-        int num_pi0 = 0;
-        for(int inFS = 0; inFS < t_nFS; inFS++)
-        {
-            if(abs(t_fsPdg[inFS]) == 111)    //pion0PDG=111
-            {
-                num_pi0++;
-            }
-        }
-
-        if(num_pi0 != 0)
-            continue;
-
         output_tree->Fill();
     }
     output_tree->Print();
     outfile->Write();
-
     return 0;
 }

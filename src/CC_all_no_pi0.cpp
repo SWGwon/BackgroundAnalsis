@@ -1,8 +1,4 @@
-#include "CDRChannelSelection.h"
-
-using namespace std;
-
-int main()
+void CC_all_no_pi0()
 {
     cout<<"---------------------------"<<endl;
     cout<<"file loading..."<<endl;
@@ -103,7 +99,7 @@ int main()
     float t_nuEnergy; tree.SetBranchAddress("nuEnergy",&t_nuEnergy);
 
 
-    TFile * outfile = new TFile("datafile/CC0pi0PxNypi0.root","RECREATE");
+    TFile * outfile = new TFile("CC_all_no_pi0.root","RECREATE");
     TTree * output_tree = tree.CloneTree(0);
 
     cout<<"file loading is done"<<endl;
@@ -117,9 +113,6 @@ int main()
         tree.GetEntry(i);
         cout<<"\033[1Aevent: "<<((double)i*100/tree.GetEntries())<<"%          \033[1000D"<<endl;
         int num_anti_muon = 0;
-        int num_pi = 0;
-        int num_proton = 0;
-        int num_neutron = 0;
         int num_pi0 = 0;
         bool is_CC = false;
         for(int inFS = 0; inFS < t_nFS; inFS++)
@@ -132,25 +125,12 @@ int main()
             {
                 num_pi0++;
             }
-            if(t_fsPdg[inFS] == 2212)
-            {
-                num_proton++;
-            }
-            if(t_fsPdg[inFS] == 2112)
-            {
-                num_neutron++;
-            }
-            if(abs(t_fsPdg[inFS]) == 211)    //pionPDG=+-211
-            {
-                num_pi++;
-            }
         }
         if(num_anti_muon > 0)
             is_CC = true;
-        if(is_CC && num_pi == 0 && num_proton == 0 && num_neutron > 0)
+        if(is_CC && num_pi0 == 0)
             output_tree->Fill();
     }
     output_tree->Print();
     outfile->Write();
 }
-
