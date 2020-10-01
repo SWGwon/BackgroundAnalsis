@@ -120,6 +120,9 @@ int main()
     int CC0pi0pxn0pi0 = 0;
     int NC1pi0p1n0pi0 = 0;
 
+    int CC0pi1p = 0;
+    int CC0pi1p_wN = 0;
+
     for(int i = 0; i < tree.GetEntries(); i++)
     {
         tree.GetEntry(i);
@@ -261,6 +264,10 @@ int main()
             CC0pi0pxn0pi0++;
         if(is_NC && num_pi == 1 && num_proton == 0 && num_neutron == 1 && num_pi0 == 0)
             NC1pi0p1n0pi0++;
+        if(is_CC && num_pi == 0 && num_proton == 1 && num_pi0 == 0)
+            CC0pi1p++;
+        if(is_CC && num_pi == 0 && num_proton == 1 && num_pi0 == 0 && num_neutron > 0)
+            CC0pi1p_wN++;
     }
     //output_tree->Print();
     //outfile->Write();
@@ -268,6 +275,7 @@ int main()
     cout<<"NC1pi+-0p0nypi0 event: "<<NC1pi0p0nypi0<<endl;
     cout<<"CC0pi+-0pxn0pi0 event: "<<CC0pi0pxn0pi0<<endl;
     cout<<"NC1pi+-0p1n0pi0 event: "<<NC1pi0p1n0pi0<<endl;
-
-    return 0;
+    cout<<"CC0pi1p event: "<<CC0pi1p<<endl;
+    cout<<"CC0pi1p_wN event: "<<CC0pi1p_wN<<endl;
 }
+

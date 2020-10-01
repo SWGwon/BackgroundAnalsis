@@ -39,11 +39,11 @@ void reco_NuE()
     float t_channel; tree->SetBranchAddress("channel", &t_channel);
     float t_nuE; tree->SetBranchAddress("neutrinoE", &t_nuE);
     float t_pionMomentum; tree->SetBranchAddress("pionMomentum", &t_pionMomentum);
-    float t_protonMomentum; tree->SetBranchAddress("protonMomentum", &t_protonMomentum);
+    float t_protonEnergy; tree->SetBranchAddress("protonEnergy", &t_protonEnergy);
 
     float smeard_mu_momentum;
     float smeard_pion_momentum;
-    float smeard_proton_momentum;
+    float smeard_proton_energy;
     float reco_muE;
     float reco_protonE;
     float reco_neutronE;    //leverarm, tof
@@ -79,7 +79,7 @@ void reco_NuE()
         reco_neutronE_smear = 1.674/1.602*pow(t_leverArm/t_tofSmear,2);    //MeV
         smeard_mu_momentum = t_muonMomentum*(1+0.04*gRandom->Gaus(0,1));
         smeard_pion_momentum = t_pionMomentum*(1+0.10*gRandom->Gaus(0,1));
-        smeard_proton_momentum = t_protonMomentum*(1+0.10*gRandom->Gaus(0,1));
+        smeard_proton_energy = t_protonEnergy*(1+0.10*gRandom->Gaus(0,1));
 
         if(t_channel == 0)
         {
@@ -94,7 +94,7 @@ void reco_NuE()
             _0pi0P_resolution_w_neutron_levertof->Fill((t_nuE*1000-reco_w_neutron_levertofsmear_0pi0P)/(t_nuE*1000));
             _0pi0P_reco_neutronE_smeared->Fill(reco_neutronE_smear);
 
-            float trueT_reco_w_neutron_levertof_0pi0P = smeard_mu_momentum+reco_neutronE;
+            float trueT_reco_w_neutron_levertof_0pi0P = smeard_mu_momentum+reco_neutronE+34;
             trueT_0pi0P_true_reco_w_neutron_levertof->Fill(t_nuE*1000,trueT_reco_w_neutron_levertof_0pi0P);
             trueT_0pi0P_resolution_w_neutron_levertof->Fill((t_nuE*1000-trueT_reco_w_neutron_levertof_0pi0P)/(t_nuE*1000));
             _0pi0P_reco_neutronE->Fill(reco_neutronE);
@@ -113,7 +113,7 @@ void reco_NuE()
             _1pi0P_resolution_w_neutron_levertof->Fill((t_nuE*1000-reco_w_neutron_levertofsmear_1pi0P)/(t_nuE*1000));
             _1pi0P_reco_neutronE_smeared->Fill(reco_neutronE_smear);
 
-            float trueT_reco_w_neutron_levertof_1pi0P = smeard_mu_momentum+reco_neutronE+smeard_pion_momentum;
+            float trueT_reco_w_neutron_levertof_1pi0P = smeard_mu_momentum+reco_neutronE+smeard_pion_momentum+34;
             trueT_1pi0P_true_reco_w_neutron_levertof->Fill(t_nuE*1000,trueT_reco_w_neutron_levertof_1pi0P);
             trueT_1pi0P_resolution_w_neutron_levertof->Fill((t_nuE*1000-trueT_reco_w_neutron_levertof_1pi0P)/(t_nuE*1000));
             _1pi0P_reco_neutronE->Fill(reco_neutronE);
@@ -121,9 +121,10 @@ void reco_NuE()
 
         if(t_channel == 2)
         {
-            float reco_wo_neutron_0pi1P = smeard_mu_momentum+smeard_proton_momentum;
-            float reco_w_neutron_allhits_0pi1P = smeard_mu_momentum+t_neutronE_allhits+smeard_proton_momentum;
-            float reco_w_neutron_levertofsmear_0pi1P = smeard_mu_momentum+reco_neutronE_smear+smeard_proton_momentum;
+        cout<<"smeared_proton_energy: "<<smeard_proton_energy<<endl;
+            float reco_wo_neutron_0pi1P = smeard_mu_momentum+smeard_proton_energy;
+            float reco_w_neutron_allhits_0pi1P = smeard_mu_momentum+t_neutronE_allhits+smeard_proton_energy;
+            float reco_w_neutron_levertofsmear_0pi1P = smeard_mu_momentum+reco_neutronE_smear+smeard_proton_energy;
             _0pi1P_true_reco_wo_neutron->Fill(t_nuE*1000,reco_wo_neutron_0pi1P);
             _0pi1P_true_reco_w_neutron_allhits->Fill(t_nuE*1000,reco_w_neutron_allhits_0pi1P);
             _0pi1P_true_reco_w_neutron_levertof->Fill(t_nuE*1000,reco_w_neutron_levertofsmear_0pi1P);
@@ -132,7 +133,7 @@ void reco_NuE()
             _0pi1P_resolution_w_neutron_levertof->Fill((t_nuE*1000-reco_w_neutron_levertofsmear_0pi1P)/(t_nuE*1000));
             _0pi1P_reco_neutronE_smeared->Fill(reco_neutronE_smear);
 
-            float trueT_reco_w_neutron_levertof_0pi1P = smeard_mu_momentum+reco_neutronE+smeard_proton_momentum;
+            float trueT_reco_w_neutron_levertof_0pi1P = smeard_mu_momentum+reco_neutronE+smeard_proton_energy+68;
             trueT_0pi1P_true_reco_w_neutron_levertof->Fill(t_nuE*1000,trueT_reco_w_neutron_levertof_0pi1P);
             trueT_0pi1P_resolution_w_neutron_levertof->Fill((t_nuE*1000-trueT_reco_w_neutron_levertof_0pi1P)/(t_nuE*1000));
             _0pi1P_reco_neutronE->Fill(reco_neutronE);

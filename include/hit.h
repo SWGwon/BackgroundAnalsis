@@ -70,6 +70,7 @@ class Hit
         float parentPdg;             // parentPdg of hit
         float cubeE;    //neutron cube energy
         float trueE;    //neutron true energy
+        float recoE;    //neutron reco energy
         float hitE;    //neutron hit energy
         float trueT;    //neutron true time
         float hitPDG;    //hit PDG
@@ -127,6 +128,9 @@ class Hit
 ////////////////////////////////////////////////////////
         void SetTrueE(float trueE);
         float GetTrueE();
+////////////////////////////////////////////////////////
+        void SetRecoE(float recoE);
+        float GetRecoE();
 ////////////////////////////////////////////////////////
         void SetHitE(float hitE);
         float GetHitE();

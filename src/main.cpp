@@ -5,10 +5,29 @@ using namespace std;
 
 int main()
 {
+    TH2F * _2d_neutron = new TH2F("","neutron;lever arm;tof",50,0,250,50,0,25);
+    TH2F * _2d_gamma = new TH2F("","gamma;lever arm;tof",50,0,250,50,0,25);
+
     bool channel_separate = true;
     bool include_gammaHit = true;
     bool include_neutronHit = true;
     bool using_Cpoint = true;
+    bool all_data_file = false;
+    bool combinegamma = true;
+    bool event_display = false;
+    float event_ratio_for_use = 100;
+
+    float x1 = 0;
+    float x2 = 289;
+    float y1 = 0;
+    float y2 = 10;
+
+    TH1F * QEneuE = new TH1F("","primary neutron trueE, QE;MeV",100,0,1500);
+    TH1F * RESneuE = new TH1F("","primary neutron trueE, RES;MeV",100,0,1500);
+    TH1F * DISneuE = new TH1F("","primary neutron trueE, DIS;MeV",100,0,1500);
+    TH1F * QEneuE_secondary= new TH1F("","secondary neutron trueE, QE;MeV",100,0,1500);
+    TH1F * RESneuE_secondary = new TH1F("","secondary neutron trueE, RES;MeV",100,0,1500);
+    TH1F * DISneuE_secondary = new TH1F("","secondary neutron trueE, DIS;MeV",100,0,1500);
 
     gErrorIgnoreLevel = 6000;
     float Z[3] = {0,0,1};
@@ -89,19 +108,22 @@ int main()
     cout<<"file loading..."<<endl;
 
     TChain tree("tree");
-    //for(int i = 1; i != filenum+1; i++)
-    //{ //cout<<"\033[1APROD"<<101<<": "<<(double)(i*100/filenum)<<"%\033[1000D"<<endl;
-    //    string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion_wNuE.root",i);
-    //    //string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
-    //    //string file = Form("/pnfs/dune/persistent/users/gyang/3DST/dump/standardGeo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
-    //    //tree.Add(TString(file));
-    //}
+    if(all_data_file)
+    {
+        for(int i = 1; i != 1000; i++)
+        { //cout<<"\033[1APROD"<<101<<": "<<(double)(i*100/filenum)<<"%\033[1000D"<<endl;
+            //string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion_wNuE.root",i);
+            //string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
+            //string file = Form("/pnfs/dune/persistent/users/gyang/3DST/dump/standardGeo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
+            //tree.Add(TString(file));
+        }
+    }
     //tree.Add("/Users/gwon/BackgroundAnalysis/CDR/CC1pi0/CDR_CC_1pi0.root");
-    //tree.Add("/Users/gwon/BackgroundAnalysis/CDR_doublecheck/CDR_CC0pi+-0P.root");
+    //tree.Add("/Users/gwon/BackgroundAnalysis/CDR_doublecheck/NC+CC/NC1pi0P0Nypi0+CC0pi0PxNypi0.root");
     //tree.Add("/Users/gwon/BackgroundAnalysis/CDR/CC0pi+-0P/CDR_CC0pi+-0P.root");
     //tree.Add("/Users/gwon/BackgroundAnalysis/CDR/CCnothing/CDR_CC_nothing.root");
-    tree.Add("/Users/gwon/BackgroundAnalysis/data/CC_selected.root");
-    //tree.Add("./NC*.root");
+    //tree.Add("/Users/gwon/BackgroundAnalysis/datafile/CC0pi0PxNypi0.root");
+    tree.Add("../datafile/CC.root");
 
     //vectors I defined
     float vec_piDeath_to_hit[3];
@@ -228,19 +250,25 @@ int main()
     float energy_deposit_in_cluster; output_tree->Branch("energy_deposit_in_cluster", &energy_deposit_in_cluster, "energy_deposit_in_cluster");
 
     float parentPDG; output_tree->Branch("parentPDG", &parentPDG, "parentPDG");
+    float protonEnergy; output_tree->Branch("protonEnergy", &protonEnergy, "protonEnergy");
+    float reco_neutronE; output_tree->Branch("reco_neutronE", &reco_neutronE, "reco_neutronE");
 
     cout<<"file loading is done"<<endl;
     cout<<"---------------------------"<<endl;
-    cout<<"total entries: "<<tree.GetEntries()<<endl;
+    cout<<"total entries: "<<tree.GetEntries()*event_ratio_for_use/100<<endl;
     cout<<"event loop starts"<<endl;
     cout<<endl;
 
     //for(int event = 0; event < 1000; event++)
-    for(int event = 0; event < tree.GetEntries(); event++)
+    int nevent = tree.GetEntries()*event_ratio_for_use/100;
+    for(int event = 0; event < nevent; event++)
     {
         tree.GetEntry(event);
+        //out of fiducial volume
+        if(abs(t_vtx[0]) > 50 || abs(t_vtx[1]) > 50 || abs(t_vtx[2]) > 50)
+            continue;
 
-        cout<<"\033[1Aevent: "<<((double)event*100/tree.GetEntries())<<"%          \033[1000D"<<endl;
+        cout<<"\033[1Aevent: "<<((double)event*100/nevent)<<"%          \033[1000D"<<endl;
         channel = -1000;
         leverArm = -1000;
         angle = -1000;
@@ -267,11 +295,14 @@ int main()
         pionMomentum = -1000;
         energy_deposit_in_cluster = 0;
         parentPDG = -1000;
+        protonEnergy = 0;
+        reco_neutronE = - 1000;
 
         int num_pi = 0;
         int num_pi0 = 0;
         int num_proton = 0;
         int num_neutron = 0;
+        int num_allpi = 0;
         for(int inFS = 0; inFS < t_nFS; inFS++)
         {
             if(abs(t_fsPdg[inFS]) == 111)    //pion0PDG=111
@@ -281,6 +312,7 @@ int main()
             if(t_fsPdg[inFS] == 2212)
             {
                 num_proton++;
+                protonEnergy = t_fsE[inFS];
             }
             if(t_fsPdg[inFS] == 2112)
             {
@@ -290,7 +322,18 @@ int main()
             {
                 num_pi++;
             }
+            if(abs(t_fsPdg[inFS]) == 211 || abs(t_fsPdg[inFS]) == 111)
+            {
+                num_allpi++;
+            }
         }
+        float CCchannel = 0;
+        //if(num_allpi == 0)
+        //    CCchannel = 0;  //QE
+        //if(num_allpi == 1)
+        //    CCchannel = 1;  //RES
+        //if(num_allpi > 1)
+        //    CCchannel = 2;  //DIS
 
         //flags for channels
         bool _1pi0p = false;
@@ -313,7 +356,11 @@ int main()
             channel = 0;
         }
 
-        if(!_1pi0p && !_0pi1p && !_0pi0p)
+        //if(!_1pi0p && !_0pi1p && !_0pi0p)
+        //    continue;
+        if(num_pi != 0)
+            continue;
+        if(num_neutron < 1)
             continue;
 
         float muon_momentum[3];
@@ -353,8 +400,8 @@ int main()
         //    cout<<"----------------------"<<endl;
         //}
 
-        if(num_muon != 1)
-            continue;
+        //if(num_muon != 1)
+        //    continue;
 
         muonAngle = GetAngle(Z,muon_momentum);
         muonMomentum = sqrt(muon_momentum[0]*muon_momentum[0]+muon_momentum[1]*muon_momentum[1]+muon_momentum[2]*muon_momentum[2]);
@@ -425,6 +472,7 @@ int main()
 
                     temp_neutron_Hit.SetTrueT(t_neutronHitT[n_neutronHit]);
                     temp_neutron_Hit.SetTrueE(t_neutronTrueE[n_neutronHit]);
+                    temp_neutron_Hit.SetRecoE(t_neutronRecoE[n_neutronHit]);
                     temp_neutron_Hit.SetCubeE(t_neutronCubeE[n_neutronHit]);
 
                     temp_neutron_Hit.SetParentId(t_neutronParentId[n_neutronHit]);
@@ -441,8 +489,8 @@ int main()
                     else
                         temp_neutron_Hit.isFromProton = 0;
                     temp_neutron_Hit.SetT(t_neutronHitT[n_neutronHit]);
-                    //temp_neutron_Hit.SetTSmear(t_neutronHitSmearT[n_neutronHit]);
-                    temp_neutron_Hit.SetTSmear(t_neutronHitT[n_neutronHit]+0.5*gRandom->Gaus(0,1));
+                    temp_neutron_Hit.SetTSmear(t_neutronHitSmearT[n_neutronHit]);
+                    //temp_neutron_Hit.SetTSmear(t_neutronHitT[n_neutronHit]+0.5*gRandom->Gaus(0,1));
                     temp_neutron_Hit.SetX(t_neutronHitX[n_neutronHit]);
                     temp_neutron_Hit.SetY(t_neutronHitY[n_neutronHit]);
                     temp_neutron_Hit.SetZ(t_neutronHitZ[n_neutronHit]);
@@ -529,8 +577,8 @@ int main()
                     else
                         temp_gamma_Hit.isFromProton = 0;
                     temp_gamma_Hit.SetT(t_gammaHitT[n_gammaHit]);
-                    //temp_gamma_Hit.SetTSmear(t_gammaHitSmearT[n_gammaHit]);
-                    temp_gamma_Hit.SetTSmear(t_gammaHitT[n_gammaHit]+0.5*gRandom->Gaus(0,1));
+                    temp_gamma_Hit.SetTSmear(t_gammaHitSmearT[n_gammaHit]);
+                    //temp_gamma_Hit.SetTSmear(t_gammaHitT[n_gammaHit]+0.5*gRandom->Gaus(0,1));
                     temp_gamma_Hit.SetX(t_gammaHitX[n_gammaHit]);
                     temp_gamma_Hit.SetY(t_gammaHitY[n_gammaHit]);
                     temp_gamma_Hit.SetZ(t_gammaHitZ[n_gammaHit]);
@@ -554,10 +602,14 @@ int main()
         if(vectorHit.size() != 0)
             std::sort(vectorHit.begin(), vectorHit.end(), tSortSmear);
 
+                //betaSmear_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
+        if(vectorHit.at(0).GetLeverArm()/vectorHit.at(0).GetTOFSmear()/c_velocity > 0.84)
+            continue;
+
         //sort by true time
         //if(vectorHit.size() != 0)
         //    std::sort(vectorHit.begin(), vectorHit.end(), tSort);
-        
+
         //parent == pi0 for gamma
         //if(vectorHit.at(0).GetParentPdg() != 111)
         //    continue;
@@ -640,42 +692,6 @@ int main()
             cube_YZPlane->Fill(t.GetY(),t.GetZ());
         }
 
-        //event display
-        //{
-        //    gStyle->SetFrameFillColor(1);
-        //    if(XYPlane_allhits->GetEntries() != 0)
-        //    {
-        //        TCanvas * can1 = new TCanvas();
-        //        can1->Divide(3,2);
-        //        can1->cd(1);
-        //        XYPlane_allhits->SetStats(0);
-        //        XYPlane_allhits->Draw("colz");
-        //        can1->cd(2);
-        //        XZPlane_allhits->SetStats(0);
-        //        XZPlane_allhits->Draw("colz");
-        //        can1->cd(3);
-        //        YZPlane_allhits->SetStats(0);
-        //        YZPlane_allhits->Draw("colz");
-
-        //        can1->cd(4);
-        //        cube_XYPlane->SetStats(0);
-        //        cube_XYPlane->Draw("colz");
-        //        can1->cd(5);
-        //        cube_XZPlane->SetStats(0);
-        //        cube_XZPlane->Draw("colz");
-        //        can1->cd(6);
-        //        cube_YZPlane->SetStats(0);
-        //        cube_YZPlane->Draw("colz");
-        //        can1->SaveAs(Form("cube_eventview_%d.pdf",event));
-        //        can1->Clear();
-        //    }
-        //    XYPlane_allhits->Reset();
-        //    XZPlane_allhits->Reset();
-        //    YZPlane_allhits->Reset();
-        //    cube_XYPlane->Reset();
-        //    cube_XZPlane->Reset();
-        //    cube_YZPlane->Reset();
-        //}
 
         //select earliest hit 
         Hit earliest_hit;
@@ -687,7 +703,7 @@ int main()
             {
                 earliest_hit.SetCategory(1);
             }
-            if(earliest_hit.GetParentId() >= 0)
+            if(earliest_hit.GetParentId() > 0)
                 earliest_hit.SetCategory(2);
         }
         if(earliest_hit.IsGamma())
@@ -697,6 +713,49 @@ int main()
             if(earliest_hit.GetParentId() > 0)
                 earliest_hit.SetCategory(4);
         }
+
+        if(earliest_hit.GetCategory() < 2)
+            _2d_neutron->Fill(earliest_hit.GetLeverArm(),earliest_hit.GetTOFSmear());
+        if(earliest_hit.GetCategory() > 1)
+            _2d_gamma->Fill(earliest_hit.GetLeverArm(),earliest_hit.GetTOFSmear());
+
+        //event display
+        if(event_display)
+        {
+            gStyle->SetFrameFillColor(1);
+            if(XYPlane_allhits->GetEntries() != 0)
+            {
+                TCanvas * can1 = new TCanvas();
+                can1->Divide(3,2);
+                can1->cd(1);
+                XYPlane_allhits->SetStats(0);
+                XYPlane_allhits->Draw("colz");
+                can1->cd(2);
+                XZPlane_allhits->SetStats(0);
+                XZPlane_allhits->Draw("colz");
+                can1->cd(3);
+                YZPlane_allhits->SetStats(0);
+                YZPlane_allhits->Draw("colz");
+
+                can1->cd(4);
+                cube_XYPlane->SetStats(0);
+                cube_XYPlane->Draw("colz");
+                can1->cd(5);
+                cube_XZPlane->SetStats(0);
+                cube_XZPlane->Draw("colz");
+                can1->cd(6);
+                cube_YZPlane->SetStats(0);
+                cube_YZPlane->Draw("colz");
+                can1->SaveAs(Form("cube_eventview_%f_%d.pdf",earliest_hit.GetCategory(),event));
+                can1->Clear();
+            }
+        }
+        XYPlane_allhits->Reset();
+        XZPlane_allhits->Reset();
+        YZPlane_allhits->Reset();
+        cube_XYPlane->Reset();
+        cube_XZPlane->Reset();
+        cube_YZPlane->Reset();
 
         if(earliest_hit.GetCategory() == -1000)
             continue;
@@ -739,6 +798,12 @@ int main()
         //signal
         if(earliest_hit.GetCategory() == 1)
         {
+            if(CCchannel == 0)
+                QEneuE->Fill(earliest_hit.GetTrueE());
+            if(CCchannel == 1)
+                RESneuE->Fill(earliest_hit.GetTrueE());
+            if(CCchannel == 2)
+                DISneuE->Fill(earliest_hit.GetTrueE());
             leverarm_signal->Fill(earliest_hit.GetLeverArm());
             leverArm = earliest_hit.GetLeverArm();
             if(channel_separate)
@@ -786,6 +851,12 @@ int main()
         //secondary neutron
         if(earliest_hit.GetCategory() == 2)
         {
+            if(CCchannel == 0)
+                QEneuE_secondary->Fill(earliest_hit.GetTrueE());
+            if(CCchannel == 1)
+                RESneuE_secondary->Fill(earliest_hit.GetTrueE());
+            if(CCchannel == 2)
+                DISneuE_secondary->Fill(earliest_hit.GetTrueE());
             leverarm_secondary_neutron->Fill(earliest_hit.GetLeverArm());
             leverArm = earliest_hit.GetLeverArm();
             if(channel_separate)
@@ -829,91 +900,139 @@ int main()
             //neutronAngle = GetAngle(Z,vec_vtx_to_hit);
         }
 
-        //primary gamma 
-        if(earliest_hit.GetCategory() == 3)
+        if(combinegamma)
         {
-            leverarm_primary_gamma->Fill(earliest_hit.GetLeverArm());
-            leverArm = earliest_hit.GetLeverArm();
-            if(channel_separate)
+            //primary gamma 
+            if(earliest_hit.GetCategory() > 2)
             {
-                if(_1pi0p)
+                leverarm_primary_gamma->Fill(earliest_hit.GetLeverArm());
+                leverArm = earliest_hit.GetLeverArm();
+                if(channel_separate)
                 {
-                    angle_primary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-                    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-                    distance_primary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-                    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
+                    if(_1pi0p)
+                    {
+                        angle_primary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
+                        angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
+                        distance_primary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
+                        distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
+                    }
+                    if(_0pi1p)
+                    {
+                        angle_primary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
+                        angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
+                        distance_primary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
+                        distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
+                    }
+                    if(_0pi0p)
+                    {
+                        angle = -1000;
+                        distanceCHit = -1000;
+                    }
                 }
-                if(_0pi1p)
-                {
-                    angle_primary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-                    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-                    distance_primary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-                    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-                }
-                if(_0pi0p)
-                {
-                    angle = -1000;
-                    distanceCHit = -1000;
-                }
+                beta_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity);
+                beta = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity;
+                TOF_primary_gamma->Fill(earliest_hit.GetTOF());
+                tof = earliest_hit.GetTOF();
+                betaSmear_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity);
+                betaSmear = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity;
+                TOFSmear_primary_gamma->Fill(earliest_hit.GetTOFSmear());
+                tofSmear = earliest_hit.GetTOFSmear();
+                CubeE_primary_gamma->Fill(earliest_hit.GetCubeE());
+                cubeE = earliest_hit.GetCubeE();
+                nCubeDis_primary_gamma->Fill(cube_cluster.size());
+                nCube = cube_cluster.size();
+                hitPDG = earliest_hit.GetHitPDG();
+                clusterEnergy_primary_gamma->Fill(energy_deposit_in_cluster);
             }
-            beta_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity);
-            beta = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity;
-            TOF_primary_gamma->Fill(earliest_hit.GetTOF());
-            tof = earliest_hit.GetTOF();
-            betaSmear_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity);
-            betaSmear = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity;
-            TOFSmear_primary_gamma->Fill(earliest_hit.GetTOFSmear());
-            tofSmear = earliest_hit.GetTOFSmear();
-            CubeE_primary_gamma->Fill(earliest_hit.GetCubeE());
-            cubeE = earliest_hit.GetCubeE();
-            nCubeDis_primary_gamma->Fill(cube_cluster.size());
-            nCube = cube_cluster.size();
-            hitPDG = earliest_hit.GetHitPDG();
-            clusterEnergy_primary_gamma->Fill(energy_deposit_in_cluster);
         }
-
-        //secondary gamma
-        if(earliest_hit.GetCategory() == 4)
+        else
         {
-            leverarm_secondary_gamma->Fill(earliest_hit.GetLeverArm());
-            leverArm = earliest_hit.GetLeverArm();
-            if(channel_separate)
+            //primary gamma 
+            if(earliest_hit.GetCategory() == 3)
             {
-                if(_1pi0p)
+                leverarm_primary_gamma->Fill(earliest_hit.GetLeverArm());
+                leverArm = earliest_hit.GetLeverArm();
+                if(channel_separate)
                 {
-                    angle_secondary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-                    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-                    distance_secondary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-                    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
+                    if(_1pi0p)
+                    {
+                        angle_primary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
+                        angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
+                        distance_primary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
+                        distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
+                    }
+                    if(_0pi1p)
+                    {
+                        angle_primary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
+                        angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
+                        distance_primary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
+                        distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
+                    }
+                    if(_0pi0p)
+                    {
+                        angle = -1000;
+                        distanceCHit = -1000;
+                    }
                 }
-                if(_0pi1p)
-                {
-                    angle_secondary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-                    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-                    distance_secondary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-                    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-                }
-                if(_0pi0p)
-                {
-                    angle = -1000;
-                    distanceCHit = -1000;
-                }
+                beta_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity);
+                beta = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity;
+                TOF_primary_gamma->Fill(earliest_hit.GetTOF());
+                tof = earliest_hit.GetTOF();
+                betaSmear_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity);
+                betaSmear = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity;
+                TOFSmear_primary_gamma->Fill(earliest_hit.GetTOFSmear());
+                tofSmear = earliest_hit.GetTOFSmear();
+                CubeE_primary_gamma->Fill(earliest_hit.GetCubeE());
+                cubeE = earliest_hit.GetCubeE();
+                nCubeDis_primary_gamma->Fill(cube_cluster.size());
+                nCube = cube_cluster.size();
+                hitPDG = earliest_hit.GetHitPDG();
+                clusterEnergy_primary_gamma->Fill(energy_deposit_in_cluster);
             }
-            beta_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
-            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
-            TOF_secondary_gamma->Fill(earliest_hit.GetTOF());
-            tof = earliest_hit.GetTOF();
-            betaSmear_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
-            betaSmear = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
-            TOFSmear_secondary_gamma->Fill(earliest_hit.GetTOFSmear());
-            tofSmear = earliest_hit.GetTOFSmear();
-            CubeE_secondary_gamma->Fill(earliest_hit.GetCubeE());
-            cubeE = earliest_hit.GetCubeE();
-            nCubeDis_secondary_gamma->Fill(cube_cluster.size());
-            nCube = cube_cluster.size();
-            hitPDG = earliest_hit.GetHitPDG();
-            secondary_gamma_parentID->Fill(earliest_hit.GetPDG());
-            clusterEnergy_secondary_gamma->Fill(energy_deposit_in_cluster);
+
+            //secondary gamma
+            if(earliest_hit.GetCategory() == 4)
+            {
+                leverarm_secondary_gamma->Fill(earliest_hit.GetLeverArm());
+                leverArm = earliest_hit.GetLeverArm();
+                if(channel_separate)
+                {
+                    if(_1pi0p)
+                    {
+                        angle_secondary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
+                        angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
+                        distance_secondary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
+                        distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
+                    }
+                    if(_0pi1p)
+                    {
+                        angle_secondary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
+                        angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
+                        distance_secondary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
+                        distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
+                    }
+                    if(_0pi0p)
+                    {
+                        angle = -1000;
+                        distanceCHit = -1000;
+                    }
+                }
+                beta_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
+                beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
+                TOF_secondary_gamma->Fill(earliest_hit.GetTOF());
+                tof = earliest_hit.GetTOF();
+                betaSmear_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
+                betaSmear = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
+                TOFSmear_secondary_gamma->Fill(earliest_hit.GetTOFSmear());
+                tofSmear = earliest_hit.GetTOFSmear();
+                CubeE_secondary_gamma->Fill(earliest_hit.GetCubeE());
+                cubeE = earliest_hit.GetCubeE();
+                nCubeDis_secondary_gamma->Fill(cube_cluster.size());
+                nCube = cube_cluster.size();
+                hitPDG = earliest_hit.GetHitPDG();
+                secondary_gamma_parentID->Fill(earliest_hit.GetPDG());
+                clusterEnergy_secondary_gamma->Fill(energy_deposit_in_cluster);
+            }
         }
         //transverse momentum
         float Px = 0;
@@ -962,16 +1081,30 @@ int main()
     legend->SetHeader("DUNE: Simulation","C");
     legend->AddEntry(leverarm_signal,"signal","l");
     legend->AddEntry(leverarm_secondary_neutron,"secondary neutron","l");
-    legend->AddEntry(leverarm_primary_gamma,"primary gamma","l");
-    legend->AddEntry(leverarm_secondary_gamma,"secondary gamma","l");
+    if(combinegamma)
+    {
+        legend->AddEntry(leverarm_primary_gamma,"gamma","l");
+    }
+    else
+    {
+        legend->AddEntry(leverarm_primary_gamma,"primary gamma","l");
+        legend->AddEntry(leverarm_secondary_gamma,"secondary gamma","l");
+    }
     legend->SetTextSize(0.055);
 
     TLegend * legend1 = new TLegend(0.1,0.6,0.5,0.9);
     legend1->SetHeader("DUNE: Simulation","C");
     legend1->AddEntry(leverarm_signal,"signal","l");
     legend1->AddEntry(leverarm_secondary_neutron,"secondary neutron","l");
-    legend1->AddEntry(leverarm_primary_gamma,"primary gamma","l");
-    legend1->AddEntry(leverarm_secondary_gamma,"secondary gamma","l");
+    if(combinegamma)
+    {
+        legend1->AddEntry(leverarm_primary_gamma,"gamma","l");
+    }
+    else
+    {
+        legend1->AddEntry(leverarm_primary_gamma,"primary gamma","l");
+        legend1->AddEntry(leverarm_secondary_gamma,"secondary gamma","l");
+    }
     legend1->SetTextSize(0.055);
 
     /*
@@ -1008,6 +1141,12 @@ int main()
     leverarm_secondary_neutron->Scale(1/leverarm_secondary_neutron->Integral(),"nosw2");
     leverarm_secondary_neutron->Draw("same");
 
+    if(combinegamma)
+    {
+    }
+    else
+    {
+    }
     leverarm_primary_gamma->Write();
     leverarm_primary_gamma->SetLineColor(6);
     leverarm_primary_gamma->SetLineWidth(3);
@@ -1054,19 +1193,31 @@ int main()
     angle_secondary_neutron->Scale(1/angle_secondary_neutron->Integral(),"nosw2");
     angle_secondary_neutron->Draw("same");
 
-    angle_primary_gamma->Write();
-    angle_primary_gamma->SetLineColor(6);
-    angle_primary_gamma->SetLineWidth(3);
-    angle_primary_gamma->SetStats(0);
-    angle_primary_gamma->Scale(1/angle_primary_gamma->Integral(),"nosw2");
-    angle_primary_gamma->Draw("same");
+    if(combinegamma)
+    {
+        angle_primary_gamma->Write();
+        angle_primary_gamma->SetLineColor(6);
+        angle_primary_gamma->SetLineWidth(3);
+        angle_primary_gamma->SetStats(0);
+        angle_primary_gamma->Scale(1/angle_primary_gamma->Integral(),"nosw2");
+        angle_primary_gamma->Draw("same");
+    }
+    else
+    {
+        angle_primary_gamma->Write();
+        angle_primary_gamma->SetLineColor(6);
+        angle_primary_gamma->SetLineWidth(3);
+        angle_primary_gamma->SetStats(0);
+        angle_primary_gamma->Scale(1/angle_primary_gamma->Integral(),"nosw2");
+        angle_primary_gamma->Draw("same");
 
-    angle_secondary_gamma->Write();
-    angle_secondary_gamma->SetLineColor(1);
-    angle_secondary_gamma->SetLineWidth(3);
-    angle_secondary_gamma->SetStats(0);
-    angle_secondary_gamma->Scale(1/angle_secondary_gamma->Integral(),"nosw2");
-    angle_secondary_gamma->Draw("same");
+        angle_secondary_gamma->Write();
+        angle_secondary_gamma->SetLineColor(1);
+        angle_secondary_gamma->SetLineWidth(3);
+        angle_secondary_gamma->SetStats(0);
+        angle_secondary_gamma->Scale(1/angle_secondary_gamma->Integral(),"nosw2");
+        angle_secondary_gamma->Draw("same");
+    }
 
     legend1->Draw();
     can->SaveAs("angle.pdf");
@@ -1100,19 +1251,31 @@ int main()
     beta_secondary_neutron->Scale(1/beta_secondary_neutron->Integral(),"nosw2");
     beta_secondary_neutron->Draw("same");
 
-    beta_primary_gamma->Write();
-    beta_primary_gamma->SetLineColor(6);
-    beta_primary_gamma->SetLineWidth(3);
-    beta_primary_gamma->SetStats(0);
-    beta_primary_gamma->Scale(1/beta_primary_gamma->Integral(),"nosw2");
-    beta_primary_gamma->Draw("same");
+    if(combinegamma)
+    {
+        beta_primary_gamma->Write();
+        beta_primary_gamma->SetLineColor(6);
+        beta_primary_gamma->SetLineWidth(3);
+        beta_primary_gamma->SetStats(0);
+        beta_primary_gamma->Scale(1/beta_primary_gamma->Integral(),"nosw2");
+        beta_primary_gamma->Draw("same");
+    }
+    else
+    {
+        beta_primary_gamma->Write();
+        beta_primary_gamma->SetLineColor(6);
+        beta_primary_gamma->SetLineWidth(3);
+        beta_primary_gamma->SetStats(0);
+        beta_primary_gamma->Scale(1/beta_primary_gamma->Integral(),"nosw2");
+        beta_primary_gamma->Draw("same");
 
-    beta_secondary_gamma->Write();
-    beta_secondary_gamma->SetLineColor(1);
-    beta_secondary_gamma->SetLineWidth(3);
-    beta_secondary_gamma->SetStats(0);
-    beta_secondary_gamma->Scale(1/beta_secondary_gamma->Integral(),"nosw2");
-    beta_secondary_gamma->Draw("same");
+        beta_secondary_gamma->Write();
+        beta_secondary_gamma->SetLineColor(1);
+        beta_secondary_gamma->SetLineWidth(3);
+        beta_secondary_gamma->SetStats(0);
+        beta_secondary_gamma->Scale(1/beta_secondary_gamma->Integral(),"nosw2");
+        beta_secondary_gamma->Draw("same");
+    }
 
     legend1->Draw();
     can->SaveAs("beta.pdf");
@@ -1146,19 +1309,31 @@ int main()
     betaSmear_secondary_neutron->Scale(1/betaSmear_secondary_neutron->Integral(),"nosw2");
     betaSmear_secondary_neutron->Draw("same");
 
-    betaSmear_primary_gamma->Write();
-    betaSmear_primary_gamma->SetLineColor(6);
-    betaSmear_primary_gamma->SetLineWidth(3);
-    betaSmear_primary_gamma->SetStats(0);
-    betaSmear_primary_gamma->Scale(1/betaSmear_primary_gamma->Integral(),"nosw2");
-    betaSmear_primary_gamma->Draw("same");
+    if(combinegamma)
+    {
+        betaSmear_primary_gamma->Write();
+        betaSmear_primary_gamma->SetLineColor(6);
+        betaSmear_primary_gamma->SetLineWidth(3);
+        betaSmear_primary_gamma->SetStats(0);
+        betaSmear_primary_gamma->Scale(1/betaSmear_primary_gamma->Integral(),"nosw2");
+        betaSmear_primary_gamma->Draw("same");
+    }
+    else
+    {
+        betaSmear_primary_gamma->Write();
+        betaSmear_primary_gamma->SetLineColor(6);
+        betaSmear_primary_gamma->SetLineWidth(3);
+        betaSmear_primary_gamma->SetStats(0);
+        betaSmear_primary_gamma->Scale(1/betaSmear_primary_gamma->Integral(),"nosw2");
+        betaSmear_primary_gamma->Draw("same");
 
-    betaSmear_secondary_gamma->Write();
-    betaSmear_secondary_gamma->SetLineColor(1);
-    betaSmear_secondary_gamma->SetLineWidth(3);
-    betaSmear_secondary_gamma->SetStats(0);
-    betaSmear_secondary_gamma->Scale(1/betaSmear_secondary_gamma->Integral(),"nosw2");
-    betaSmear_secondary_gamma->Draw("same");
+        betaSmear_secondary_gamma->Write();
+        betaSmear_secondary_gamma->SetLineColor(1);
+        betaSmear_secondary_gamma->SetLineWidth(3);
+        betaSmear_secondary_gamma->SetStats(0);
+        betaSmear_secondary_gamma->Scale(1/betaSmear_secondary_gamma->Integral(),"nosw2");
+        betaSmear_secondary_gamma->Draw("same");
+    }
 
     legend1->Draw();
     can->SaveAs("betaSmear.pdf");
@@ -1192,19 +1367,31 @@ int main()
     distance_secondary_neutron->Scale(1/distance_secondary_neutron->Integral(),"nosw2");
     distance_secondary_neutron->Draw("same");
 
-    distance_primary_gamma->Write();
-    distance_primary_gamma->SetLineColor(6);
-    distance_primary_gamma->SetLineWidth(3);
-    distance_primary_gamma->SetStats(0);
-    distance_primary_gamma->Scale(1/distance_primary_gamma->Integral(),"nosw2");
-    distance_primary_gamma->Draw("same");
+    if(combinegamma)
+    {
+        distance_primary_gamma->Write();
+        distance_primary_gamma->SetLineColor(6);
+        distance_primary_gamma->SetLineWidth(3);
+        distance_primary_gamma->SetStats(0);
+        distance_primary_gamma->Scale(1/distance_primary_gamma->Integral(),"nosw2");
+        distance_primary_gamma->Draw("same");
+    }
+    else
+    {
+        distance_primary_gamma->Write();
+        distance_primary_gamma->SetLineColor(6);
+        distance_primary_gamma->SetLineWidth(3);
+        distance_primary_gamma->SetStats(0);
+        distance_primary_gamma->Scale(1/distance_primary_gamma->Integral(),"nosw2");
+        distance_primary_gamma->Draw("same");
 
-    distance_secondary_gamma->Write();
-    distance_secondary_gamma->SetLineColor(1);
-    distance_secondary_gamma->SetLineWidth(3);
-    distance_secondary_gamma->SetStats(0);
-    distance_secondary_gamma->Scale(1/distance_secondary_gamma->Integral(),"nosw2");
-    distance_secondary_gamma->Draw("same");
+        distance_secondary_gamma->Write();
+        distance_secondary_gamma->SetLineColor(1);
+        distance_secondary_gamma->SetLineWidth(3);
+        distance_secondary_gamma->SetStats(0);
+        distance_secondary_gamma->Scale(1/distance_secondary_gamma->Integral(),"nosw2");
+        distance_secondary_gamma->Draw("same");
+    }
 
     legend->Draw();
     can->SaveAs("distance.pdf");
@@ -1238,19 +1425,31 @@ int main()
     TOF_secondary_neutron->Scale(1/TOF_secondary_neutron->Integral(),"nosw2");
     TOF_secondary_neutron->Draw("same");
 
-    TOF_primary_gamma->Write();
-    TOF_primary_gamma->SetLineColor(6);
-    TOF_primary_gamma->SetLineWidth(3);
-    TOF_primary_gamma->SetStats(0);
-    TOF_primary_gamma->Scale(1/TOF_primary_gamma->Integral(),"nosw2");
-    TOF_primary_gamma->Draw("same");
+    if(combinegamma)
+    {
+        TOF_primary_gamma->Write();
+        TOF_primary_gamma->SetLineColor(6);
+        TOF_primary_gamma->SetLineWidth(3);
+        TOF_primary_gamma->SetStats(0);
+        TOF_primary_gamma->Scale(1/TOF_primary_gamma->Integral(),"nosw2");
+        TOF_primary_gamma->Draw("same");
+    }
+    else
+    {
+        TOF_primary_gamma->Write();
+        TOF_primary_gamma->SetLineColor(6);
+        TOF_primary_gamma->SetLineWidth(3);
+        TOF_primary_gamma->SetStats(0);
+        TOF_primary_gamma->Scale(1/TOF_primary_gamma->Integral(),"nosw2");
+        TOF_primary_gamma->Draw("same");
 
-    TOF_secondary_gamma->Write();
-    TOF_secondary_gamma->SetLineColor(1);
-    TOF_secondary_gamma->SetLineWidth(3);
-    TOF_secondary_gamma->SetStats(0);
-    TOF_secondary_gamma->Scale(1/TOF_secondary_gamma->Integral(),"nosw2");
-    TOF_secondary_gamma->Draw("same");
+        TOF_secondary_gamma->Write();
+        TOF_secondary_gamma->SetLineColor(1);
+        TOF_secondary_gamma->SetLineWidth(3);
+        TOF_secondary_gamma->SetStats(0);
+        TOF_secondary_gamma->Scale(1/TOF_secondary_gamma->Integral(),"nosw2");
+        TOF_secondary_gamma->Draw("same");
+    }
 
     legend->Draw();
     can->SaveAs("TOF.pdf");
@@ -1284,19 +1483,31 @@ int main()
     TOFSmear_secondary_neutron->Scale(1/TOFSmear_secondary_neutron->Integral(),"nosw2");
     TOFSmear_secondary_neutron->Draw("same");
 
-    TOFSmear_primary_gamma->Write();
-    TOFSmear_primary_gamma->SetLineColor(6);
-    TOFSmear_primary_gamma->SetLineWidth(3);
-    TOFSmear_primary_gamma->SetStats(0);
-    TOFSmear_primary_gamma->Scale(1/TOFSmear_primary_gamma->Integral(),"nosw2");
-    TOFSmear_primary_gamma->Draw("same");
+    if(combinegamma)
+    {
+        TOFSmear_primary_gamma->Write();
+        TOFSmear_primary_gamma->SetLineColor(6);
+        TOFSmear_primary_gamma->SetLineWidth(3);
+        TOFSmear_primary_gamma->SetStats(0);
+        TOFSmear_primary_gamma->Scale(1/TOFSmear_primary_gamma->Integral(),"nosw2");
+        TOFSmear_primary_gamma->Draw("same");
+    }
+    else
+    {
+        TOFSmear_primary_gamma->Write();
+        TOFSmear_primary_gamma->SetLineColor(6);
+        TOFSmear_primary_gamma->SetLineWidth(3);
+        TOFSmear_primary_gamma->SetStats(0);
+        TOFSmear_primary_gamma->Scale(1/TOFSmear_primary_gamma->Integral(),"nosw2");
+        TOFSmear_primary_gamma->Draw("same");
 
-    TOFSmear_secondary_gamma->Write();
-    TOFSmear_secondary_gamma->SetLineColor(1);
-    TOFSmear_secondary_gamma->SetLineWidth(3);
-    TOFSmear_secondary_gamma->SetStats(0);
-    TOFSmear_secondary_gamma->Scale(1/TOFSmear_secondary_gamma->Integral(),"nosw2");
-    TOFSmear_secondary_gamma->Draw("same");
+        TOFSmear_secondary_gamma->Write();
+        TOFSmear_secondary_gamma->SetLineColor(1);
+        TOFSmear_secondary_gamma->SetLineWidth(3);
+        TOFSmear_secondary_gamma->SetStats(0);
+        TOFSmear_secondary_gamma->Scale(1/TOFSmear_secondary_gamma->Integral(),"nosw2");
+        TOFSmear_secondary_gamma->Draw("same");
+    }
 
     legend->Draw();
     can->SaveAs("TOFSmear.pdf");
@@ -1330,19 +1541,31 @@ int main()
     CubeE_secondary_neutron->Scale(1/CubeE_secondary_neutron->Integral(),"nosw2");
     CubeE_secondary_neutron->Draw("same");
 
-    CubeE_primary_gamma->Write();
-    CubeE_primary_gamma->SetLineColor(6);
-    CubeE_primary_gamma->SetLineWidth(3);
-    CubeE_primary_gamma->SetStats(0);
-    CubeE_primary_gamma->Scale(1/CubeE_primary_gamma->Integral(),"nosw2");
-    CubeE_primary_gamma->Draw("same");
+    if(combinegamma)
+    {
+        CubeE_primary_gamma->Write();
+        CubeE_primary_gamma->SetLineColor(6);
+        CubeE_primary_gamma->SetLineWidth(3);
+        CubeE_primary_gamma->SetStats(0);
+        CubeE_primary_gamma->Scale(1/CubeE_primary_gamma->Integral(),"nosw2");
+        CubeE_primary_gamma->Draw("same");
+    }
+    else
+    {
+        CubeE_primary_gamma->Write();
+        CubeE_primary_gamma->SetLineColor(6);
+        CubeE_primary_gamma->SetLineWidth(3);
+        CubeE_primary_gamma->SetStats(0);
+        CubeE_primary_gamma->Scale(1/CubeE_primary_gamma->Integral(),"nosw2");
+        CubeE_primary_gamma->Draw("same");
 
-    CubeE_secondary_gamma->Write();
-    CubeE_secondary_gamma->SetLineColor(1);
-    CubeE_secondary_gamma->SetLineWidth(3);
-    CubeE_secondary_gamma->SetStats(0);
-    CubeE_secondary_gamma->Scale(1/CubeE_secondary_gamma->Integral(),"nosw2");
-    CubeE_secondary_gamma->Draw("same");
+        CubeE_secondary_gamma->Write();
+        CubeE_secondary_gamma->SetLineColor(1);
+        CubeE_secondary_gamma->SetLineWidth(3);
+        CubeE_secondary_gamma->SetStats(0);
+        CubeE_secondary_gamma->Scale(1/CubeE_secondary_gamma->Integral(),"nosw2");
+        CubeE_secondary_gamma->Draw("same");
+    }
 
     legend->Draw();
     can->SaveAs("CubeE.pdf");
@@ -1379,21 +1602,34 @@ int main()
     nCubeDis_secondary_neutron->Scale(1/nCubeDis_secondary_neutron->Integral(),"nosw2");
     nCubeDis_secondary_neutron->Draw("same");
 
-    nCubeDis_primary_gamma->Write();
-    nCubeDis_primary_gamma->SetLineColor(6);
-    nCubeDis_primary_gamma->SetLineColor(6);
-    nCubeDis_primary_gamma->SetLineWidth(3);
-    nCubeDis_primary_gamma->SetStats(0);
-    nCubeDis_primary_gamma->Scale(1/nCubeDis_primary_gamma->Integral(),"nosw2");
-    nCubeDis_primary_gamma->Draw("same");
+    if(combinegamma)
+    {
+        nCubeDis_primary_gamma->Write();
+        nCubeDis_primary_gamma->SetLineColor(6);
+        nCubeDis_primary_gamma->SetLineColor(6);
+        nCubeDis_primary_gamma->SetLineWidth(3);
+        nCubeDis_primary_gamma->SetStats(0);
+        nCubeDis_primary_gamma->Scale(1/nCubeDis_primary_gamma->Integral(),"nosw2");
+        nCubeDis_primary_gamma->Draw("same");
+    }
+    else
+    {
+        nCubeDis_primary_gamma->Write();
+        nCubeDis_primary_gamma->SetLineColor(6);
+        nCubeDis_primary_gamma->SetLineColor(6);
+        nCubeDis_primary_gamma->SetLineWidth(3);
+        nCubeDis_primary_gamma->SetStats(0);
+        nCubeDis_primary_gamma->Scale(1/nCubeDis_primary_gamma->Integral(),"nosw2");
+        nCubeDis_primary_gamma->Draw("same");
 
-    nCubeDis_secondary_gamma->Write();
-    nCubeDis_secondary_gamma->SetLineColor(1);
-    nCubeDis_secondary_gamma->SetLineColor(1);
-    nCubeDis_secondary_gamma->SetLineWidth(3);
-    nCubeDis_secondary_gamma->SetStats(0);
-    nCubeDis_secondary_gamma->Scale(1/nCubeDis_secondary_gamma->Integral(),"nosw2");
-    nCubeDis_secondary_gamma->Draw("same");
+        nCubeDis_secondary_gamma->Write();
+        nCubeDis_secondary_gamma->SetLineColor(1);
+        nCubeDis_secondary_gamma->SetLineColor(1);
+        nCubeDis_secondary_gamma->SetLineWidth(3);
+        nCubeDis_secondary_gamma->SetStats(0);
+        nCubeDis_secondary_gamma->Scale(1/nCubeDis_secondary_gamma->Integral(),"nosw2");
+        nCubeDis_secondary_gamma->Draw("same");
+    }
 
     legend->Draw();
     can->SaveAs("nCubeDis.pdf");
@@ -1430,21 +1666,34 @@ int main()
     clusterEnergy_secondary_neutron->Scale(1/clusterEnergy_secondary_neutron->Integral(),"nosw2");
     clusterEnergy_secondary_neutron->Draw("same");
 
-    clusterEnergy_primary_gamma->Write();
-    clusterEnergy_primary_gamma->SetLineColor(6);
-    clusterEnergy_primary_gamma->SetLineColor(6);
-    clusterEnergy_primary_gamma->SetLineWidth(3);
-    clusterEnergy_primary_gamma->SetStats(0);
-    clusterEnergy_primary_gamma->Scale(1/clusterEnergy_primary_gamma->Integral(),"nosw2");
-    clusterEnergy_primary_gamma->Draw("same");
+    if(combinegamma)
+    {
+        clusterEnergy_primary_gamma->Write();
+        clusterEnergy_primary_gamma->SetLineColor(6);
+        clusterEnergy_primary_gamma->SetLineColor(6);
+        clusterEnergy_primary_gamma->SetLineWidth(3);
+        clusterEnergy_primary_gamma->SetStats(0);
+        clusterEnergy_primary_gamma->Scale(1/clusterEnergy_primary_gamma->Integral(),"nosw2");
+        clusterEnergy_primary_gamma->Draw("same");
+    }
+    else
+    {
+        clusterEnergy_primary_gamma->Write();
+        clusterEnergy_primary_gamma->SetLineColor(6);
+        clusterEnergy_primary_gamma->SetLineColor(6);
+        clusterEnergy_primary_gamma->SetLineWidth(3);
+        clusterEnergy_primary_gamma->SetStats(0);
+        clusterEnergy_primary_gamma->Scale(1/clusterEnergy_primary_gamma->Integral(),"nosw2");
+        clusterEnergy_primary_gamma->Draw("same");
 
-    clusterEnergy_secondary_gamma->Write();
-    clusterEnergy_secondary_gamma->SetLineColor(1);
-    clusterEnergy_secondary_gamma->SetLineColor(1);
-    clusterEnergy_secondary_gamma->SetLineWidth(3);
-    clusterEnergy_secondary_gamma->SetStats(0);
-    clusterEnergy_secondary_gamma->Scale(1/clusterEnergy_secondary_gamma->Integral(),"nosw2");
-    clusterEnergy_secondary_gamma->Draw("same");
+        clusterEnergy_secondary_gamma->Write();
+        clusterEnergy_secondary_gamma->SetLineColor(1);
+        clusterEnergy_secondary_gamma->SetLineColor(1);
+        clusterEnergy_secondary_gamma->SetLineWidth(3);
+        clusterEnergy_secondary_gamma->SetStats(0);
+        clusterEnergy_secondary_gamma->Scale(1/clusterEnergy_secondary_gamma->Integral(),"nosw2");
+        clusterEnergy_secondary_gamma->Draw("same");
+    }
 
     legend->Draw();
     can->SaveAs("clusterEnergy.pdf");
@@ -1454,11 +1703,44 @@ int main()
     secondary_gamma_parentID->Draw();
     can->SaveAs("secondary_gamma_parentID.pdf");
     can->Clear();
+
+    QEneuE->Draw();
+    can->SaveAs("QEneuE.pdf");
+    can->Clear();
+
+    RESneuE->Draw();
+    can->SaveAs("RESneuE.pdf");
+    can->Clear();
+
+    DISneuE->Draw();
+    can->SaveAs("DISneuE.pdf");
+    can->Clear();
+
+    QEneuE_secondary->Draw();
+    can->SaveAs("QEneuE_secondary.pdf");
+    can->Clear();
+
+    RESneuE_secondary->Draw();
+    can->SaveAs("RESneuE_secondary.pdf");
+    can->Clear();
+
+    DISneuE_secondary->Draw();
+    can->SaveAs("DISneuE_secondary.pdf");
+    can->Clear();
     fi1->Close();
 
     cout<<"making output files is done"<<endl;
     cout<<"---------------------------"<<endl;
     cout<<"all done"<<endl;
 
+    TCanvas * can10 = new TCanvas;
+    can10->Divide(2,1);
+    can10->cd(1);
+    can10->cd(1)->SetLogz();
+    _2d_neutron->Draw("colz");
+    can10->cd(2);
+    can10->cd(2)->SetLogz();
+    _2d_gamma->Draw("colz");
+    can10->SaveAs("2d.pdf");
     return 0;
 }
