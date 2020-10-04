@@ -29,5 +29,8 @@ TARGET_LINK_LIBRARIES(CCSelection bkg)
 ADD_EXECUTABLE(CDRChannelSelection ${SRC_DIR}/CDRChannelSelection.cpp)
 TARGET_LINK_LIBRARIES(CDRChannelSelection bkg)
 
-#ADD_EXECUTABLE(Guang_validation Guang_validation.cpp)
-#TARGET_LINK_LIBRARIES(Guang_validation bkg)
+ADD_EXECUTABLE(arm_time_2d_cut arm_time_2d_cut.C)
+TARGET_LINK_LIBRARIES(arm_time_2d_cut bkg)
+
+ADD_EXECUTABLE(neutronE_resolution neutronE_resolution.cpp)
+TARGET_LINK_LIBRARIES(neutronE_resolution bkg)
