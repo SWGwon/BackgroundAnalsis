@@ -5,13 +5,7 @@ using namespace std;
 int main()
 {
     TChain tree("tree");
-    for(int i = 1; i != 1000; i++)
-    { //cout<<"\033[1APROD"<<101<<": "<<(double)(i*100/filenum)<<"%\033[1000D"<<endl;
-        string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion_wNuE.root",i);
-        //string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
-        //string file = Form("/pnfs/dune/persistent/users/gyang/3DST/dump/standardGeo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
-        tree.Add(TString(file));
-    }
+    tree.Add("/Users/gwon/Geo13/PROD102/RHC_*.root");
 
     int t_ifileNo; tree.SetBranchAddress("ifileNo",&t_ifileNo);
     int t_ievt; tree.SetBranchAddress("ievt",&t_ievt);
@@ -99,7 +93,7 @@ int main()
     float t_hitT[1000]; tree.SetBranchAddress("hitT",&t_hitT);
     float t_nuEnergy; tree.SetBranchAddress("nuEnergy",&t_nuEnergy);
 
-    TFile * outfile = new TFile("CC_selected.root","RECREATE");
+    TFile * outfile = new TFile("CC_RHC_Geo13_PROD102.root","RECREATE");
     TTree * output_tree = tree.CloneTree(0);
 
     for(int i = 0; i < tree.GetEntries(); i++)
