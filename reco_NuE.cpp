@@ -279,6 +279,5 @@ void reco_NuE()
     _0pi1P_reco_neutronE_smeared->Draw();
     can9->cd(2);
     _0pi1P_reco_neutronE->Draw();
-
 }
 

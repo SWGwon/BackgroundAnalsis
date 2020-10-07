@@ -192,21 +192,15 @@ int TMVAClassification_3DSTneutron( TString myMethodList = "" )
    // but will appear in the final "TestTree" produced by TMVA. This TestTree will contain the
    // input variables, the response values of all trained MVAs, and the spectator variables
 
-   dataloader->AddSpectator( "neutronE:=neutronE",  "neutronE", "units", 'F' );
-   dataloader->AddSpectator( "neutronAngle:=neutronAngle",  "neutronAngle", "units", 'F' );
-   dataloader->AddSpectator( "muonAngle:=muonAngle",  "muonAngle", "units", 'F' );
-   dataloader->AddSpectator( "muonMomentum:=muonMomentum",  "muonMomentum", "units", 'F' );
-   dataloader->AddSpectator( "muonMomentum:=muonMomentum",  "muonMomentum", "units", 'F' );
-   dataloader->AddSpectator( "singleTransverseVariable_1pi:=singleTransverseVariable_1pi",  "singleTransverseVariable_1pi", "units", 'F' );
-   dataloader->AddSpectator( "singleTransverseVariable_1P:=singleTransverseVariable_1P",  "singleTransverseVariable_1P", "units", 'F' );
-   dataloader->AddSpectator( "singleTransverseVariable_0pi0P:=singleTransverseVariable_0pi0P",  "singleTransverseVariable_0pi0P", "units", 'F' );
-   dataloader->AddSpectator( "neutrinoE:=neutrinoE",  "neutrinoE", "units", 'F' );
-   dataloader->AddSpectator( "Q2:=Q2",  "Q2", "units", 'F' );
-   dataloader->AddSpectator( "channel:=channel",  "channel", "units", 'F' );
-   dataloader->AddSpectator( "protonMomentum:=protonMomentum",  "protonMomentum", "units", 'F' );
-   dataloader->AddSpectator( "pionMomentum:=pionMomentum",  "pionMomentum", "units", 'F' );
-   dataloader->AddSpectator( "parentPDG:=parentPDG",  "parentPDG", "units", 'F' );
-   dataloader->AddSpectator( "category:=category",  "category", "units", 'F' );
+  // dataloader->AddSpectator( "nuEnergy:=nuEnergy",  "nuEnergy", "units", 'F' );
+   //dataloader->AddSpectator( "category:=category",  "category", "units", 'F' );
+   //dataloader->AddSpectator( "betaSmear:=betaSmear", "betaSmear", "units", 'F' );
+  // dataloader->AddSpectator( "EvtXSec:=EvtXSec",  "EvtXSec", "units", 'F' );
+  // dataloader->AddSpectator( "EvtDXSec:=EvtDXSec",  "EvtDXSec", "units", 'F' );
+  // dataloader->AddSpectator( "true_nu:=true_nu",  "true_nu", "units", 'F' );
+  // dataloader->AddSpectator( "reco_nu:=reco_nu",  "reco_nu", "units", 'F' );
+  // dataloader->AddSpectator( "muonE:=muonE",  "muonE", "units", 'F' );
+  // dataloader->AddSpectator( "tofSmear:=tofSmear",  "tofSmear", "units", 'F' );
 
    // global event weights per tree (see below for setting event-wise weights)
    Double_t signalWeight     = 1.0;
@@ -218,8 +212,10 @@ int TMVAClassification_3DSTneutron( TString myMethodList = "" )
 
    // Apply additional cuts on the signal and background samples (can be different)
    TCut myCommonCut = "";
-   TCut mycuts = "category < 3" && myCommonCut;
-   TCut mycutb = "category > 2" && myCommonCut;
+   //TCut mycuts = "category < 3 && betaSmear < 0.84" && myCommonCut;
+   //TCut mycutb = "category > 2 && betaSmear < 0.84" && myCommonCut;
+   TCut mycuts = "category < 2" && myCommonCut;
+   TCut mycutb = "category > 1" && myCommonCut;
 
    // Tell the dataloader how to use the training and testing events
    //

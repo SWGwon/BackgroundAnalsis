@@ -8,27 +8,34 @@ void help()
 {
     cout<<"Usage: ./BackgroundAnalysis [OPTION]"<<endl;
     cout<<"Options:"<<endl;
-    cout<<"  --help, -h               : show this help message and exit"<<endl;
-    cout<<"  --output, -o [FILE NAME] : output file name"<<endl;
-    cout<<"  --display, -d            : save event display"<<endl;
-    cout<<"  --noGamma                : not include gamma hits"<<endl;
-    cout<<"  --noNeutron              : not include neutron hits"<<endl;
-    cout<<"  -u [NUMBER]              : using [NUMBER]\% of entry"<<endl;
+    cout<<"  --help, -h                  : show this help message and exit"<<endl;
+    cout<<"  --output, -o [FILE NAME]    : output file name"<<endl;
+    cout<<"  --display, -D               : save event display"<<endl;
+    cout<<"  --noGamma                   : not include gamma hits"<<endl;
+    cout<<"  --noNeutron                 : not include neutron hits"<<endl;
+    cout<<"  --threshold, -t [NUMBER]    : energy threshold for hits"<<endl;
+    cout<<"  --inputfile, -i [file]      : directory of input files"<<endl;
+    cout<<"  -u [NUMBER]                 : using [NUMBER]\% of entry"<<endl;
+    cout<<"  --3DST_centerX ,-x [NUMBER] : X location of 3DST center"<<endl;
+    cout<<"  --3DST_centerY ,-y [NUMBER] : Y location of 3DST center"<<endl;
+    cout<<"  --3DST_centerZ ,-z [NUMBER] : Z location of 3DST center"<<endl;
 }
 
 int main(int argc, char * argv[])
 {
-    gErrorIgnoreLevel = 6000;
-    float _3DST_x1 = -120; 
-    float _3DST_x2 = 120; 
-    float _3DST_y1 = -120; 
-    float _3DST_y2 = 120; 
-    float _3DST_z1 = -150;
-    float _3DST_z2 = 50; 
-    float FV_x = 100;
-    float FV_y = 100;
-    float FV_z = 100;
 
+    gErrorIgnoreLevel = 6000;
+    int _3DST_centerX = 0; 
+    int _3DST_centerY = 0; 
+    int _3DST_centerZ = -50; 
+    int _3DSTx = 240; 
+    int _3DSTy = 240; 
+    int _3DSTz = 200; 
+    int FV_x = 100;
+    int FV_y = 100;
+    int FV_z = 100;
+
+    float energyHitCut = 0.2; //energy deposit threshold for cube
     int IsExtendCube = false;
     int event_display = false;
     int include_gammaHit = true;
@@ -37,6 +44,7 @@ int main(int argc, char * argv[])
     float event_ratio_for_use = 100;
     string name_output_file = "variables.root";
     string name_input_file;
+    string input_directory;
 
     struct option options[] = 
         {
@@ -45,14 +53,19 @@ int main(int argc, char * argv[])
             {"noGamma", 0, &include_gammaHit, false},
             {"noNeutron", 0, &include_neutronHit, false},
             {"output", 1, 0, 'o'},
+            {"threshold", 1, 0,'t'},
             {"help", 0, 0, 'h'},
+            {"inputfile", 1, 0, 'i'},
+            {"3DST_centerX", 1, 0, 'x'},
+            {"3DST_centerY", 1, 0, 'y'},
+            {"3DST_centerZ", 1, 0, 'z'},
             {"pion", 1, 0, 'p'}
         };
 
     int option_index = 0;
     int option = 0;
 
-    while((option = getopt_long(argc, argv, "dho:u:i:p:", options, &option_index))!=EOF)
+    while((option = getopt_long(argc, argv, "dho:u:i:p:x:y:z:", options, &option_index))!=EOF)
     {
         switch(option)
         {
@@ -77,6 +90,12 @@ int main(int argc, char * argv[])
                     event_display = true;
                     break;
                 }
+            case 't' :
+                {
+                    stringstream temp(optarg);
+                    temp >> energyHitCut;
+                    break;
+                }
             case 'i' :
                 {
                     name_input_file = optarg;
@@ -88,9 +107,26 @@ int main(int argc, char * argv[])
                     temp >> numPionRequire;
                     break;
                 }
+            case 'x' :
+                {
+                    std::stringstream temp(optarg);
+                    temp >> _3DST_centerX;
+                    break;
+                }
+            case 'y' :
+                {
+                    std::stringstream temp(optarg);
+                    temp >> _3DST_centerY;
+                    break;
+                }
+            case 'z' :
+                {
+                    std::stringstream temp(optarg);
+                    temp >> _3DST_centerZ;
+                    break;
+                }
         }
     }
-
 
     //histograms,
     //0: primary neutron
@@ -159,7 +195,6 @@ int main(int argc, char * argv[])
     TH2F * XZPlane_allhits = new TH2F("XZ_allhits","XZ;X;Z",240,-120,120,200,-100,100);
     TH2F * YZPlane_allhits = new TH2F("YZ_allhits","YZ;Y;Z",240,-120,120,200,-100,100);
 
-    float energyHitCut = 0.2; //energy deposit threshold for cube
     const double c_velocity = 29.9792458;
 
     cout<<"---------------------------"<<endl;
@@ -169,7 +204,6 @@ int main(int argc, char * argv[])
     TTree * output_tree = new TTree("output_tree", "output_tree");
 
     //variable for output root file
-    float channel; output_tree->Branch("channel",&channel,"channel 0pi0P_0 0pi_1 1P_2");
     float leverArm; output_tree->Branch("leverArm",&leverArm, "lever arm");
     float angle; output_tree->Branch("angle",&angle, "angle between C and hit");
     float beta; output_tree->Branch("beta",&beta, "beta");
@@ -189,9 +223,7 @@ int main(int argc, char * argv[])
 
     //vectors I defined
     float vec_piDeath_to_hit[3];
-    float vec_protonDeath_to_hit[3];
     float vec_vtx_to_piDeath[3];
-    float vec_vtx_to_protonDeath[3];
 
     TChain * tree = new TChain("tree");
     if(name_input_file.size() == 0)
@@ -209,7 +241,9 @@ int main(int argc, char * argv[])
         }
     }
     else
+    {
         tree->Add(name_input_file.c_str());
+    }
 
     //SetBranchAddress
     float t_vtx[3]; tree->SetBranchAddress("vtx",&t_vtx);
@@ -266,13 +300,21 @@ int main(int argc, char * argv[])
     cout<<boolalpha;
     cout<<"---------------------------"<<endl;
     cout<<"Options"<<endl;
-    cout<<"|-Output file: "<<name_output_file<<endl;
-    cout<<"|-IsExtendCube: "<<(bool)IsExtendCube<<endl;
-    cout<<"|-event display: "<<(bool)event_display<<endl;
-    cout<<"|-include gamma: "<<(bool)include_gammaHit<<endl;
-    cout<<"|-include neutron: "<<(bool)include_neutronHit<<endl;
-    cout<<"|-number of pion: "<<numPionRequire<<endl;
-    cout<<"|-use "<<event_ratio_for_use<<"\% of entry"<<endl;
+    if(name_input_file.size() != 0)
+        cout<<"|-input file      : "<<name_input_file<<endl;
+    cout<<"|-Output file     : "<<name_output_file<<endl;
+    cout<<"|-Threshold       : "<<energyHitCut<<"MeV"<<endl;
+    cout<<"|-ExtendCube      : "<<(bool)IsExtendCube<<endl;
+    cout<<"|-Event display   : "<<(bool)event_display<<endl;
+    cout<<"|-Include gamma   : "<<(bool)include_gammaHit<<endl;
+    cout<<"|-Include neutron : "<<(bool)include_neutronHit<<endl;
+    cout<<"|-Number of pion  : "<<numPionRequire<<endl;
+    cout<<"|-Use "<<event_ratio_for_use<<"\% of entry"<<endl;
+    cout<<"---------------------------"<<endl;
+    cout<<"Geometry"<<endl;
+    cout<<"|-center of 3DST  : "<<_3DST_centerX<<", "<<_3DST_centerY<<", "<<_3DST_centerZ<<endl;
+    cout<<"|-size of 3DST    : "<<_3DSTx<<", "<<_3DSTy<<", "<<_3DSTz<<endl;
+    cout<<"|-Fiducial Volume : "<<FV_x<<", "<<FV_y<<", "<<FV_z<<endl;
     cout<<"---------------------------"<<endl;
     cout<<"run? (Y/N)";
     string run;
@@ -290,14 +332,13 @@ int main(int argc, char * argv[])
         cout<<"\033[1Aevent: "<<((double)event*100/nevent)<<"%          \033[1000D"<<endl;
         tree->GetEntry(event);
         //out of fiducial volume
-        if(t_vtx[0] < (_3DST_x2+_3DST_x1)-FV_x/2 || t_vtx[0] > (_3DST_x1+_3DST_x2+FV_x/2))
+        if(t_vtx[0] < _3DST_centerX-FV_x/2 || t_vtx[0] > _3DST_centerX+FV_x/2)
             continue;
-        if(t_vtx[1] < (_3DST_y2+_3DST_y1)-FV_y/2 || t_vtx[1] > (_3DST_y1+_3DST_y2+FV_y/2))
+        if(t_vtx[1] < _3DST_centerY-FV_y/2 || t_vtx[1] > _3DST_centerY+FV_y/2)
             continue;
-        if(t_vtx[2] < (_3DST_z2+_3DST_z1)-FV_z/2 || t_vtx[2] > (_3DST_z1+_3DST_z2+FV_z/2))
+        if(t_vtx[2] < _3DST_centerZ-FV_z/2 || t_vtx[2] > _3DST_centerZ+FV_z/2)
             continue;
 
-        channel = -1000;
         leverArm = -1000;
         angle = -1000;
         beta = -1000;
@@ -364,11 +405,11 @@ int main(int argc, char * argv[])
             for(int n_neutronHit = 0; n_neutronHit < 1000; n_neutronHit++)
             {
                 //out of 3dst
-                if(t_neutronHitX[n_neutronHit] > _3DST_x2 || t_neutronHitX[n_neutronHit] < _3DST_x1)
+                if(t_neutronHitX[n_neutronHit] > _3DST_centerX+_3DSTx/2 || t_neutronHitX[n_neutronHit] < _3DST_centerX-_3DSTx/2)
                     continue;
-                if(t_neutronHitY[n_neutronHit] > _3DST_y2 || t_neutronHitY[n_neutronHit] < _3DST_y1)
+                if(t_neutronHitY[n_neutronHit] > _3DST_centerY+_3DSTy/2 || t_neutronHitY[n_neutronHit] < _3DST_centerY-_3DSTy/2)
                     continue;
-                if(t_neutronHitZ[n_neutronHit] > _3DST_z2 || t_neutronHitZ[n_neutronHit] < _3DST_z1)
+                if(t_neutronHitZ[n_neutronHit] > _3DST_centerZ+_3DSTz/2 || t_neutronHitZ[n_neutronHit] < _3DST_centerZ-_3DSTz/2)
                     continue;
                 if(t_neutronHitX[n_neutronHit] == 0)
                     continue;
@@ -385,10 +426,7 @@ int main(int argc, char * argv[])
 
                 //energy threshold
                 if(t_neutronCubeE[n_neutronHit] < energyHitCut || t_neutronCubeE[n_neutronHit] == 0)
-                    //if(t_neutronHitE[n_neutronHit] < energyHitCut || t_neutronHitE[n_neutronHit] == 0)
                     continue;
-                neutronE_deposit[n_neutronHit] = t_neutronHitE[n_neutronHit];
-                neutronE_allhits += t_neutronHitE[n_neutronHit];
 
                 //calculate lever arm
                 float leverArm = pow(
@@ -397,8 +435,8 @@ int main(int argc, char * argv[])
                         pow(t_neutronHitZ[n_neutronHit] - t_vtx[2],2),0.5);
 
                 //calculate signal window; time of flight
-                float tof = t_neutronHitT[n_neutronHit] - t_vtxTime;
-                float tofSmear = t_neutronHitSmearT[n_neutronHit] - t_vtxTimeSmear;
+                float tof = t_neutronHitT[n_neutronHit] - t_vtxTime - 1;
+                float tofSmear = t_neutronHitSmearT[n_neutronHit] - t_vtxTimeSmear - 1;
 
                 //Fix a bug from edep-sim
                 if(tof == 1)
@@ -453,11 +491,11 @@ int main(int argc, char * argv[])
             for(int n_gammaHit = 0; n_gammaHit < 1000; n_gammaHit++)
             {
                 //out of 3dst
-                if(t_gammaHitX[n_gammaHit] > _3DST_x2 || t_gammaHitX[n_gammaHit] < _3DST_x1)
+                if(t_gammaHitX[n_gammaHit] > _3DST_centerX+_3DSTx/2 || t_gammaHitX[n_gammaHit] < _3DST_centerX-_3DSTx/2)
                     continue;
-                if(t_gammaHitY[n_gammaHit] > _3DST_y2 || t_gammaHitY[n_gammaHit] < _3DST_y1)
+                if(t_gammaHitY[n_gammaHit] > _3DST_centerY+_3DSTy/2 || t_gammaHitY[n_gammaHit] < _3DST_centerY-_3DSTy/2)
                     continue;
-                if(t_gammaHitZ[n_gammaHit] > _3DST_z2 || t_gammaHitZ[n_gammaHit] < _3DST_z1)
+                if(t_gammaHitZ[n_gammaHit] > _3DST_centerZ+_3DSTz/2 || t_gammaHitZ[n_gammaHit] < _3DST_centerZ-_3DSTz/2)
                     continue;
                 if(t_gammaHitX[n_gammaHit] == 0)
                     continue;
@@ -483,8 +521,8 @@ int main(int argc, char * argv[])
                         pow(t_gammaHitZ[n_gammaHit] - t_vtx[2],2),0.5);
 
                 //calculate signal window; time of flight
-                float tof = t_gammaHitT[n_gammaHit] - t_vtxTime;
-                float tofSmear = t_gammaHitSmearT[n_gammaHit] - t_vtxTimeSmear;
+                float tof = t_gammaHitT[n_gammaHit] - t_vtxTime - 1;
+                float tofSmear = t_gammaHitSmearT[n_gammaHit] - t_vtxTimeSmear - 1;
 
                 //Fix a bug from edep-sim
                 if(tof == 1)
@@ -541,10 +579,6 @@ int main(int argc, char * argv[])
         //sort by time smear
         if(vectorHit.size() != 0)
             std::sort(vectorHit.begin(), vectorHit.end(), tSortSmear);
-
-        //sort by true time
-        //if(vectorHit.size() != 0)
-        //    std::sort(vectorHit.begin(), vectorHit.end(), tSort);
 
         //map<position,pair<true,time>>
         std::map<std::tuple<float,float,float>,std::pair<int,float>> cube_fired;
@@ -695,28 +729,22 @@ int main(int argc, char * argv[])
         parentPDG = earliest_hit.GetParentPdg();
         //cout<<"parentPDG: "<<parentPDG<<endl;
 
-        for(int i = 0; i < 3; i++)
+        for(int i = 0; i < 3; i++)      //i: x,y,z
         {
             if(i == 0)
             {
                 vec_piDeath_to_hit[i] = earliest_hit.GetX()-earliest_hit.piDeath[i];
                 vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxX();
-                vec_protonDeath_to_hit[i] = earliest_hit.GetX()-earliest_hit.protonDeath[i];
-                vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxX();
             }
             if(i == 1)
             {
                 vec_piDeath_to_hit[i] = earliest_hit.GetY()-earliest_hit.piDeath[i];
                 vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxY();
-                vec_protonDeath_to_hit[i] = earliest_hit.GetY()-earliest_hit.protonDeath[i];
-                vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxY();
             }
             if(i == 2)
             {
                 vec_piDeath_to_hit[i] = earliest_hit.GetZ()-earliest_hit.piDeath[i];
                 vec_vtx_to_piDeath[i] = earliest_hit.piDeath[i]-earliest_hit.GetVtxZ();
-                vec_protonDeath_to_hit[i] = earliest_hit.GetZ()-earliest_hit.protonDeath[i];
-                vec_vtx_to_protonDeath[i] = earliest_hit.protonDeath[i]-earliest_hit.GetVtxZ();
             }
         }
 
@@ -788,9 +816,7 @@ int main(int argc, char * argv[])
     outfile->Write();
     outfile->Close();
 
-    cout<<"event loop is aone"<<endl;
-    cout<<"---------------------------"<<endl;
-    cout<<"making output files"<<endl;
+    cout<<"making output files... ";
 
     TFile * fi1 = new TFile("background.root","RECREATE");
     gStyle->SetFrameFillColor(0);
@@ -1149,15 +1175,15 @@ int main(int argc, char * argv[])
 
     legend->Draw();
     can->SaveAs("clusterEnergy.pdf");
-    can->SaveAs("clusterEnergy.C");
+    can->SaveAs("test/clusterEnergy.C");
     can->Clear();
     //}
 
     fi1->Close();
 
-    cout<<"making output files is done"<<endl;
+    cout<<"done"<<endl;
     cout<<"---------------------------"<<endl;
-    cout<<"all done"<<endl;
+    cout<<"exit"<<endl;
 
     return 0;
 }
