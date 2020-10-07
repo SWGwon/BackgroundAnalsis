@@ -321,7 +321,7 @@ int main(int argc, char * argv[])
     if(run != "Y")
         return 0;
     cout<<"---------------------------"<<endl;
-    cout<<"file loading..."<<endl;
+    cout<<"file loading...";
     cout<<"\033[1000Dtotal entries: "<<tree->GetEntries()*event_ratio_for_use/100<<endl;
     cout<<"event loop starts"<<endl;
     cout<<endl;
