@@ -198,7 +198,6 @@ int main(int argc, char * argv[])
     const double c_velocity = 29.9792458;
 
     cout<<"---------------------------"<<endl;
-    cout<<"file loading..."<<endl;
 
     TFile * outfile = new TFile(name_output_file.c_str(),"RECREATE");
     TTree * output_tree = new TTree("output_tree", "output_tree");
@@ -322,7 +321,8 @@ int main(int argc, char * argv[])
     if(run != "Y")
         return 0;
     cout<<"---------------------------"<<endl;
-    cout<<"total entries: "<<tree->GetEntries()*event_ratio_for_use/100<<endl;
+    cout<<"file loading..."<<endl;
+    cout<<"\033[1000Dtotal entries: "<<tree->GetEntries()*event_ratio_for_use/100<<endl;
     cout<<"event loop starts"<<endl;
     cout<<endl;
 
