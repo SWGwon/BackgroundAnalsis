@@ -3,84 +3,79 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char * argv[])
 {
-    TH2F * _2d_neutron = new TH2F("","neutron;lever arm;tof",50,0,250,50,0,25);
-    TH2F * _2d_gamma = new TH2F("","gamma;lever arm;tof",50,0,250,50,0,25);
+    float _3DST_x1 = -120; 
+    float _3DST_x2 = 120; 
+    float _3DST_y1 = -120; 
+    float _3DST_y2 = 120; 
+    float _3DST_z1 = -150;
+    float _3DST_z2 = 50; 
+    float FV_x = 100;
+    float FV_y = 100;
+    float FV_z = 100;
 
-    bool channel_separate = true;
     bool include_gammaHit = true;
     bool include_neutronHit = true;
-    bool using_Cpoint = true;
-    bool all_data_file = false;
-    bool combinegamma = true;
     bool event_display = false;
+    bool IsExtendCube = false;
     float event_ratio_for_use = 100;
 
-    float x1 = 0;
-    float x2 = 289;
-    float y1 = 0;
-    float y2 = 10;
-
-    TH1F * QEneuE = new TH1F("","primary neutron trueE, QE;MeV",100,0,1500);
-    TH1F * RESneuE = new TH1F("","primary neutron trueE, RES;MeV",100,0,1500);
-    TH1F * DISneuE = new TH1F("","primary neutron trueE, DIS;MeV",100,0,1500);
-    TH1F * QEneuE_secondary= new TH1F("","secondary neutron trueE, QE;MeV",100,0,1500);
-    TH1F * RESneuE_secondary = new TH1F("","secondary neutron trueE, RES;MeV",100,0,1500);
-    TH1F * DISneuE_secondary = new TH1F("","secondary neutron trueE, DIS;MeV",100,0,1500);
-
-    gErrorIgnoreLevel = 6000;
-    float Z[3] = {0,0,1};
-    //
-    //signal{
-    TH1F * leverarm_signal = new TH1F("leverarm_signal","lever arm of signal",20,0,200);
-    TH1F * angle_signal = new TH1F("angle_signal","angle between C and signal hit",20,0,1);
-    TH1F * beta_signal = new TH1F("beta_signal","beta of signal",30,0,1.5);
-    TH1F * distance_signal = new TH1F("distance_signal","distance b/w C and signal hit",20,0,200);
-    TH1F * TOF_signal = new TH1F("TOF_signal","time of flight of signal", 25,0,25);
-    TH1F * CubeE_signal = new TH1F("CubeE_signal", "CubeE of signal", 30, 0, 15);
-    TH1F * nCubeDis_signal = new TH1F("nCubeDis_signal","number of cubes, signal", 50, 0, 100);
-    TH1F * betaSmear_signal = new TH1F("betaSmear_signal","beta of signal smearT",30,0,1.5);
-    TH1F * TOFSmear_signal = new TH1F("TOFSmear_signal","time of flight of signal smearT", 25,0,25);
-    TH1F * clusterEnergy_signal = new TH1F("clusterEnergy_signal","cluster energy of signal", 25,0,250);
+    //histograms,
+    //0: primary neutron
+    //1: secondary neutron
+    //2: primary gamma
+    //3: secondary gamma
+    //{
+    TH1F * hist_leverarm[3];
+    TH1F * hist_angle[3];
+    TH1F * hist_beta[3];
+    TH1F * hist_distance[3];
+    TH1F * hist_TOF[3];
+    TH1F * hist_CubeE[3];
+    TH1F * hist_nCubeDis[3];
+    TH1F * hist_betaSmear[3];
+    TH1F * hist_TOFSmear[3];
+    TH1F * hist_clusterEnergy[3];
     //}
+
+    //primary neutron{
+    hist_leverarm[0] = new TH1F("leverarm_signal","lever arm of signal",20,0,200);
+    hist_angle[0] = new TH1F("angle_signal","angle between C and signal hit",20,0,1);
+    hist_beta[0] = new TH1F("beta_signal","beta of signal",30,0,1.5);
+    hist_distance[0] = new TH1F("distance_signal","distance b/w C and signal hit",20,0,200);
+    hist_TOF[0] = new TH1F("TOF_signal","time of flight of signal", 25,0,25);
+    hist_CubeE[0] = new TH1F("CubeE_signal", "CubeE of signal", 30, 0, 15);
+    hist_nCubeDis[0] = new TH1F("nCubeDis_signal","number of cubes, signal", 50, 0, 100);
+    hist_betaSmear[0] = new TH1F("betaSmear_signal","beta of signal smearT",30,0,1.5);
+    hist_TOFSmear[0] = new TH1F("TOFSmear_signal","time of flight of signal smearT", 25,0,25);
+    hist_clusterEnergy[0] = new TH1F("clusterEnergy_signal","cluster energy of signal", 25,0,250);
+    //}
+
     //secondary neutron{ 
-    TH1F * leverarm_secondary_neutron = new TH1F("leverarm_secondary_neutron","lever arm of secondary_neutron",20,0,200);
-    TH1F * angle_secondary_neutron = new TH1F("angle_secondary_neutron","angle between C and secondary_neutron hit",20,0,1);
-    TH1F * beta_secondary_neutron = new TH1F("beta_secondary_neutron","beta of secondary_neutron",30,0,1.5);
-    TH1F * distance_secondary_neutron = new TH1F("distance_secondary_neutron","distance b/w C and secondary_neutron hit",20,0,200);
-    TH1F * TOF_secondary_neutron = new TH1F("TOF_secondary_neutron","time of flight of secondary_neutron", 25,0,25);
-    TH1F * CubeE_secondary_neutron = new TH1F("CubeE_secondary_neutron", "CubeE of secondary_neutron", 30, 0, 15);
-    TH1F * nCubeDis_secondary_neutron = new TH1F("nCubeDis_secondary_neutron","number of cubes, secondary neutron", 50, 0, 100);
-    TH1F * betaSmear_secondary_neutron = new TH1F("betaSmear_secondary_neutron","beta of secondary_neutron smearT",30,0,1.5);
-    TH1F * TOFSmear_secondary_neutron = new TH1F("TOFSmear_secondary_neutron","time of flight of secondary_neutron smearT", 25,0,25);
-    TH1F * clusterEnergy_secondary_neutron = new TH1F("clusterEnergy_secondary_neutron","cluster energy of secondary_neutron", 25,0,250);
+    hist_leverarm[1] = new TH1F("leverarm_secondary_neutron","lever arm of secondary_neutron",20,0,200);
+    hist_angle[1] = new TH1F("angle_secondary_neutron","angle between C and secondary_neutron hit",20,0,1);
+    hist_beta[1] = new TH1F("beta_secondary_neutron","beta of secondary_neutron",30,0,1.5);
+    hist_distance[1] = new TH1F("distance_secondary_neutron","distance b/w C and secondary_neutron hit",20,0,200);
+    hist_TOF[1] = new TH1F("TOF_secondary_neutron","time of flight of secondary_neutron", 25,0,25);
+    hist_CubeE[1] = new TH1F("CubeE_secondary_neutron", "CubeE of secondary_neutron", 30, 0, 15);
+    hist_nCubeDis[1] = new TH1F("nCubeDis_secondary_neutron","number of cubes, secondary neutron", 50, 0, 100);
+    hist_betaSmear[1] = new TH1F("betaSmear_secondary_neutron","beta of secondary_neutron smearT",30,0,1.5);
+    hist_TOFSmear[1] = new TH1F("TOFSmear_secondary_neutron","time of flight of secondary_neutron smearT", 25,0,25);
+    hist_clusterEnergy[1] = new TH1F("clusterEnergy_secondary_neutron","cluster energy of secondary_neutron", 25,0,250);
     //}
 
-    //primary gamma{
-    TH1F * leverarm_primary_gamma = new TH1F("leverarm_primary_gamma","lever arm of primary_gamma",20,0,200);
-    TH1F * angle_primary_gamma = new TH1F("angle_primary_gamma","angle between C and primary_gamma hit",20,0,1);
-    TH1F * beta_primary_gamma = new TH1F("beta_primary_gamma","beta of primary_gamma",30,0,1.5);
-    TH1F * distance_primary_gamma = new TH1F("distance_primary_gamma","distance b/w C and primary_gamma hit",20,0,200);
-    TH1F * TOF_primary_gamma = new TH1F("TOF_primary_gamma","time of flight of primary_gamma", 25,0,25);
-    TH1F * CubeE_primary_gamma = new TH1F("CubeE_primary_gamma", "CubeE of primary_gamma", 30, 0, 15);
-    TH1F * nCubeDis_primary_gamma = new TH1F("nCubeDis_primary_gamma","number of cubes, primary gamma", 50, 0, 100);
-    TH1F * betaSmear_primary_gamma = new TH1F("betaSmear_primary_gamma","beta of primary_gamma smearT",30,0,1.5);
-    TH1F * TOFSmear_primary_gamma = new TH1F("TOFSmear_primary_gamma","time of flight of primary_gamma smearT", 25,0,25);
-    TH1F * clusterEnergy_primary_gamma = new TH1F("clusterEnergy_primary_gamma","cluster energy of primary_gamma", 25,0,250);
-    //}
-
-    //secondary gamma{
-    TH1F * leverarm_secondary_gamma = new TH1F("leverarm_secondary_gamma","lever arm of secondary_gamma",20,0,200);
-    TH1F * angle_secondary_gamma = new TH1F("angle_secondary_gamma","angle between C and secondary_gamma hit",20,0,1);
-    TH1F * beta_secondary_gamma = new TH1F("beta_secondary_gamma","beta of secondary_gamma",30,0,1.5);
-    TH1F * distance_secondary_gamma = new TH1F("distance_secondary_gamma","distance b/w C and secondary_gamma hit",20,0,200);
-    TH1F * TOF_secondary_gamma = new TH1F("TOF_secondary_gamma","time of flight of secondary_gamma", 25,0,25);
-    TH1F * CubeE_secondary_gamma = new TH1F("CubeE_secondary_gamma", "CubeE of secondary_gamma", 30, 0, 15);
-    TH1F * nCubeDis_secondary_gamma = new TH1F("nCubeDis_secondary_gamma","number of cubes, secondary gamma", 50, 0, 100);
-    TH1F * betaSmear_secondary_gamma = new TH1F("betaSmear_secondary_gamma","beta of secondary_gamma smearT",30,0,1.5);
-    TH1F * TOFSmear_secondary_gamma = new TH1F("TOFSmear_secondary_gamma","time of flight of secondary_gamma smearT", 25,0,25);
-    TH1F * clusterEnergy_secondary_gamma = new TH1F("clusterEnergy_secondary_gamma","cluster energy of secondary_gamma", 25,0,250);
+    //gamma{
+    hist_leverarm[2] = new TH1F("leverarm_primary_gamma","lever arm of primary_gamma",20,0,200);
+    hist_angle[2] = new TH1F("angle_primary_gamma","angle between C and primary_gamma hit",20,0,1);
+    hist_beta[2] = new TH1F("beta_primary_gamma","beta of primary_gamma",30,0,1.5);
+    hist_distance[2] = new TH1F("distance_primary_gamma","distance b/w C and primary_gamma hit",20,0,200);
+    hist_TOF[2] = new TH1F("TOF_primary_gamma","time of flight of primary_gamma", 25,0,25);
+    hist_CubeE[2] = new TH1F("CubeE_primary_gamma", "CubeE of primary_gamma", 30, 0, 15);
+    hist_nCubeDis[2] = new TH1F("nCubeDis_primary_gamma","number of cubes, primary gamma", 50, 0, 100);
+    hist_betaSmear[2] = new TH1F("betaSmear_primary_gamma","beta of primary_gamma smearT",30,0,1.5);
+    hist_TOFSmear[2] = new TH1F("TOFSmear_primary_gamma","time of flight of primary_gamma smearT", 25,0,25);
+    hist_clusterEnergy[2] = new TH1F("clusterEnergy_primary_gamma","cluster energy of primary_gamma", 25,0,250);
     //}
 
     TH1F * timeWindow = new TH1F("timeWindow", "",250,0,25);
@@ -94,129 +89,11 @@ int main()
     TH2F * XZPlane_allhits = new TH2F("XZ_allhits","XZ;X;Z",240,-120,120,200,-100,100);
     TH2F * YZPlane_allhits = new TH2F("YZ_allhits","YZ;Y;Z",240,-120,120,200,-100,100);
 
-    TH1F * secondary_gamma_parentID = new TH1F("","",200,-100,100);
     float energyHitCut = 0.2; //energy deposit threshold for cube
     const double c_velocity = 29.9792458;
-    //histograms{
 
-    //}
-
-    //int filenum;
-    //cout<<"filenum :"<<endl;
-    //cin>>filenum;
     cout<<"---------------------------"<<endl;
     cout<<"file loading..."<<endl;
-
-    TChain tree("tree");
-    if(all_data_file)
-    {
-        for(int i = 1; i != 1000; i++)
-        { //cout<<"\033[1APROD"<<101<<": "<<(double)(i*100/filenum)<<"%\033[1000D"<<endl;
-            //string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion_wNuE.root",i);
-            //string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
-            //string file = Form("/pnfs/dune/persistent/users/gyang/3DST/dump/standardGeo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
-            //tree.Add(TString(file));
-        }
-    }
-    //tree.Add("/Users/gwon/BackgroundAnalysis/CDR/CC1pi0/CDR_CC_1pi0.root");
-    //tree.Add("/Users/gwon/BackgroundAnalysis/CDR_doublecheck/NC+CC/NC1pi0P0Nypi0+CC0pi0PxNypi0.root");
-    //tree.Add("/Users/gwon/BackgroundAnalysis/CDR/CC0pi+-0P/CDR_CC0pi+-0P.root");
-    //tree.Add("/Users/gwon/BackgroundAnalysis/CDR/CCnothing/CDR_CC_nothing.root");
-    //tree.Add("/Users/gwon/BackgroundAnalysis/datafile/CC0pi0PxNypi0.root");
-    tree.Add("../datafile/CC.root");
-
-    //vectors I defined
-    float vec_piDeath_to_hit[3];
-    float vec_protonDeath_to_hit[3];
-    float vec_vtx_to_piDeath[3];
-    float vec_vtx_to_protonDeath[3];
-
-    //SetBranchAddress
-    int t_ifileNo; tree.SetBranchAddress("ifileNo",&t_ifileNo);
-    int t_ievt; tree.SetBranchAddress("ievt",&t_ievt);
-    float t_p3lep[3]; tree.SetBranchAddress("p3lep",&t_p3lep);
-    float t_p3pi[3]; tree.SetBranchAddress("p3pi",&t_p3pi);
-    float t_p3proton[3]; tree.SetBranchAddress("p3proton",&t_p3proton);
-    float t_vtx[3]; tree.SetBranchAddress("vtx",&t_vtx);
-    float t_lepDeath[3]; tree.SetBranchAddress("lepDeath",&t_lepDeath);
-    int t_lepPdg; tree.SetBranchAddress("lepPdg",&t_lepPdg);
-    float t_lepKE; tree.SetBranchAddress("lepKE",&t_lepKE);
-    int t_piPdg; tree.SetBranchAddress("piPdg",&t_piPdg);
-    float t_piKE; tree.SetBranchAddress("piKE",&t_piKE);
-    float t_piDeath[3]; tree.SetBranchAddress("piDeath",&t_piDeath);
-    int t_protonPdg; tree.SetBranchAddress("protonPdg",&t_protonPdg);
-    float t_protonKE; tree.SetBranchAddress("protonKE",&t_protonKE);
-    float t_protonDeath[3]; tree.SetBranchAddress("protonDeath",&t_protonDeath);
-    int t_muexit; tree.SetBranchAddress("muexit",&t_muexit);
-    float t_muonExitPt[3]; tree.SetBranchAddress("muonExitPt",&t_muonExitPt);
-    float t_muonExitMom[3]; tree.SetBranchAddress("muonExitMom",&t_muonExitMom);
-    int t_muonReco; tree.SetBranchAddress("muonReco",&t_muonReco);
-    float t_muGArLen; tree.SetBranchAddress("muGArLen",&t_muGArLen);
-    int t_piexit; tree.SetBranchAddress("piexit",&t_piexit);
-    float t_pionExitPt[3]; tree.SetBranchAddress("pionExitPt",&t_pionExitPt);
-    float t_pionExitMom[3]; tree.SetBranchAddress("pionExitMom",&t_pionExitMom);
-    int t_pionReco; tree.SetBranchAddress("pionReco",&t_pionReco);
-    float t_piGArLen; tree.SetBranchAddress("piGArLen",&t_piGArLen);
-    int t_protonexit; tree.SetBranchAddress("protonexit",&t_protonexit);
-    float t_protonExitPt[3]; tree.SetBranchAddress("protonExitPt",&t_protonExitPt);
-    float t_protonExitMom[3]; tree.SetBranchAddress("protonExitMom",&t_protonExitMom);
-    int t_protonReco; tree.SetBranchAddress("protonReco",&t_protonReco);
-    float t_protonGArLen; tree.SetBranchAddress("protonGArLen",&t_protonGArLen);
-    float t_hadTot; tree.SetBranchAddress("hadTot",&t_hadTot);
-    float t_hadTot_TPC; tree.SetBranchAddress("hadTot_TPC",&t_hadTot_TPC);
-    float t_hadTot_3DST; tree.SetBranchAddress("hadTot_3DST",&t_hadTot_3DST);
-    float t_hadTot_ECAL; tree.SetBranchAddress("hadTot_ECAL",&t_hadTot_ECAL);
-    float t_hadTot_allECAL; tree.SetBranchAddress("hadTot_allECAL",&t_hadTot_allECAL);
-    float t_hadTot_leak; tree.SetBranchAddress("hadTot_leak",&t_hadTot_leak);
-    float t_hadCollar; tree.SetBranchAddress("hadCollar",&t_hadCollar);
-    float t_hadCollar_side[4]; tree.SetBranchAddress("hadCollar_side",&t_hadCollar_side);
-    float t_lepCollar_side[4]; tree.SetBranchAddress("lepCollar_side",&t_lepCollar_side);
-    int t_nFS; tree.SetBranchAddress("nFS",&t_nFS);
-    int t_fsPdg[1000]; tree.SetBranchAddress("fsPdg",&t_fsPdg);
-    float t_fsPx[1000]; tree.SetBranchAddress("fsPx",&t_fsPx);
-    float t_fsPy[1000]; tree.SetBranchAddress("fsPy",&t_fsPy);
-    float t_fsPz[1000]; tree.SetBranchAddress("fsPz",&t_fsPz);
-    float t_fsE[1000]; tree.SetBranchAddress("fsE",&t_fsE);
-    float t_fsTrkLen[1000]; tree.SetBranchAddress("fsTrkLen",&t_fsTrkLen);
-    float t_neutronHitX[1000]; tree.SetBranchAddress("neutronHitX",&t_neutronHitX);
-    float t_neutronHitY[1000]; tree.SetBranchAddress("neutronHitY",&t_neutronHitY);
-    float t_neutronHitZ[1000]; tree.SetBranchAddress("neutronHitZ",&t_neutronHitZ);
-    float t_neutronHitT[1000]; tree.SetBranchAddress("neutronHitT",&t_neutronHitT);
-    float t_neutronHitSmearT[1000]; tree.SetBranchAddress("neutronHitSmearT",&t_neutronHitSmearT);
-    float t_neutronHitE[1000]; tree.SetBranchAddress("neutronHitE",&t_neutronHitE);
-    float t_neutronCubeE[1000]; tree.SetBranchAddress("neutronCubeE",&t_neutronCubeE);
-    float t_neutronRecoE[1000]; tree.SetBranchAddress("neutronRecoE",&t_neutronRecoE);
-    float t_neutronHitPDG[1000]; tree.SetBranchAddress("neutronHitPDG",&t_neutronHitPDG);
-    float t_neutronTrueE[1000]; tree.SetBranchAddress("neutronTrueE",&t_neutronTrueE);
-    float t_neutronParentId[1000]; tree.SetBranchAddress("neutronParentId",&t_neutronParentId);
-    float t_neutronParentPDG[1000]; tree.SetBranchAddress("neutronParentPDG",&t_neutronParentPDG);
-    float t_neutronStartingPointX[1000]; tree.SetBranchAddress("neutronStartingPointX",&t_neutronStartingPointX);
-    float t_neutronStartingPointY[1000]; tree.SetBranchAddress("neutronStartingPointY",&t_neutronStartingPointY);
-    float t_neutronStartingPointZ[1000]; tree.SetBranchAddress("neutronStartingPointZ",&t_neutronStartingPointZ);
-    float t_neutronStartingPointT[1000]; tree.SetBranchAddress("neutronStartingPointT",&t_neutronStartingPointT);
-    float t_gammaHitX[1000]; tree.SetBranchAddress("gammaHitX",&t_gammaHitX);
-    float t_gammaHitY[1000]; tree.SetBranchAddress("gammaHitY",&t_gammaHitY);
-    float t_gammaHitZ[1000]; tree.SetBranchAddress("gammaHitZ",&t_gammaHitZ);
-    float t_gammaHitT[1000]; tree.SetBranchAddress("gammaHitT",&t_gammaHitT);
-    float t_gammaHitSmearT[1000]; tree.SetBranchAddress("gammaHitSmearT",&t_gammaHitSmearT);
-    float t_gammaHitE[1000]; tree.SetBranchAddress("gammaHitE",&t_gammaHitE);
-    float t_gammaCubeE[1000]; tree.SetBranchAddress("gammaCubeE",&t_gammaCubeE);
-    float t_gammaRecoE[1000]; tree.SetBranchAddress("gammaRecoE",&t_gammaRecoE);
-    float t_gammaHitPDG[1000]; tree.SetBranchAddress("gammaHitPDG",&t_gammaHitPDG);
-    float t_gammaTrueE[1000]; tree.SetBranchAddress("gammaTrueE",&t_gammaTrueE);
-    float t_gammaParentId[1000]; tree.SetBranchAddress("gammaParentId",&t_gammaParentId);
-    float t_gammaParentPDG[1000]; tree.SetBranchAddress("gammaParentPDG",&t_gammaParentPDG);
-    float t_gammaStartingPointX[1000]; tree.SetBranchAddress("gammaStartingPointX",&t_gammaStartingPointX);
-    float t_gammaStartingPointY[1000]; tree.SetBranchAddress("gammaStartingPointY",&t_gammaStartingPointY);
-    float t_gammaStartingPointZ[1000]; tree.SetBranchAddress("gammaStartingPointZ",&t_gammaStartingPointZ);
-    float t_gammaStartingPointT[1000]; tree.SetBranchAddress("gammaStartingPointT",&t_gammaStartingPointT);
-    float t_vtxTime; tree.SetBranchAddress("vtxTime",&t_vtxTime);
-    float t_hitLocationX[1000]; tree.SetBranchAddress("hitLocationX",&t_hitLocationX);
-    float t_hitLocationY[1000]; tree.SetBranchAddress("hitLocationY",&t_hitLocationY);
-    float t_hitLocationZ[1000]; tree.SetBranchAddress("hitLocationZ",&t_hitLocationZ);
-    float t_hitE[1000]; tree.SetBranchAddress("hitE",&t_hitE);
-    float t_hitT[1000]; tree.SetBranchAddress("hitT",&t_hitT);
-    float t_nuEnergy; tree.SetBranchAddress("nuEnergy",&t_nuEnergy);
 
     TFile * outfile = new TFile("variables.root","RECREATE");
     TTree * output_tree = new TTree("output_tree", "output_tree");
@@ -235,40 +112,105 @@ int main()
     float category; output_tree->Branch("category", &category, "category");
     float neutrinoE; output_tree->Branch("neutrinoE", &neutrinoE, "neutrinoE");
     float hitPDG; output_tree->Branch("hitPDG", &hitPDG, "hitPDG");
-    float neutronE; output_tree->Branch("neutronE", &neutronE, "neutronE");
-    float neutronAngle; output_tree->Branch("neutronAngle", &neutronAngle, "neutronAngle");
-    float singleTransverseVariable_1pi; output_tree->Branch("singleTransverseVariable_1pi", &singleTransverseVariable_1pi, "singleTransverseVariable_1pi");
-    float singleTransverseVariable_1P; output_tree->Branch("singleTransverseVariable_1P", &singleTransverseVariable_1P, "singleTransverseVariable_1P");
-    float singleTransverseVariable_0pi0P; output_tree->Branch("singleTransverseVariable_0pi0P", &singleTransverseVariable_0pi0P, "singleTransverseVariable_0pi0P");
-    float muonAngle; output_tree->Branch("muonAngle", &muonAngle, "muonAngle");
-    float muonMomentum; output_tree->Branch("muonMomentum", &muonMomentum, "muonMomentum");
-    float Q2; output_tree->Branch("Q2",&Q2,"Q2");
     float neutronE_allhits; output_tree->Branch("neutronE_allhits", &neutronE_allhits, "neutronE_allhits");
-    float protonMomentum; output_tree->Branch("protonMomentum", &protonMomentum, "protonMomentum");
-    float pionMomentum; output_tree->Branch("pionMomentum", &pionMomentum, "pionMomentum");
     float neutronE_deposit[1000]; output_tree->Branch("neutronE_deposit", &neutronE_deposit, "neutronE_deposit");
     float energy_deposit_in_cluster; output_tree->Branch("energy_deposit_in_cluster", &energy_deposit_in_cluster, "energy_deposit_in_cluster");
-
     float parentPDG; output_tree->Branch("parentPDG", &parentPDG, "parentPDG");
-    float protonEnergy; output_tree->Branch("protonEnergy", &protonEnergy, "protonEnergy");
-    float reco_neutronE; output_tree->Branch("reco_neutronE", &reco_neutronE, "reco_neutronE");
+
+    //vectors I defined
+    float vec_piDeath_to_hit[3];
+    float vec_protonDeath_to_hit[3];
+    float vec_vtx_to_piDeath[3];
+    float vec_vtx_to_protonDeath[3];
+
+    TChain * tree = new TChain("tree");
+    for(int i = 1; i < 1000; i++)
+    {
+        cout<<i<<"th file"<<endl;
+        //TFile * f = new TFile(Form("/pnfs/dune/persistent/users/gyang/3DST/dump/standardGeo13/PROD102/RHC_%d_extendCube.root",i));
+        TFile * f = new TFile(Form("/Users/gwon/Geo13/PROD102/RHC_%d.root",i));
+        if(!f->IsOpen())
+            continue;
+        if(!f->GetListOfKeys()->Contains("tree"))
+            continue;
+        tree->Add(Form("/Users/gwon/Geo13/PROD102/RHC_%d.root",i));
+        delete f;
+    }
+
+    //SetBranchAddress
+    float t_vtx[3]; tree->SetBranchAddress("vtx",&t_vtx);
+    float t_piDeath[4]; tree->SetBranchAddress("piDeath",&t_piDeath);
+    float t_protonDeath[3]; tree->SetBranchAddress("protonDeath",&t_protonDeath);
+    int t_nFS; tree->SetBranchAddress("nFS",&t_nFS);
+    int t_fsPdg[1000]; tree->SetBranchAddress("fsPdg",&t_fsPdg);
+    float t_fsPx[1000]; tree->SetBranchAddress("fsPx",&t_fsPx);
+    float t_fsPy[1000]; tree->SetBranchAddress("fsPy",&t_fsPy);
+    float t_fsPz[1000]; tree->SetBranchAddress("fsPz",&t_fsPz);
+    float t_fsE[1000]; tree->SetBranchAddress("fsE",&t_fsE);
+    float t_neutronHitX[1000]; tree->SetBranchAddress("neutronHitX",&t_neutronHitX);
+    float t_neutronHitY[1000]; tree->SetBranchAddress("neutronHitY",&t_neutronHitY);
+    float t_neutronHitZ[1000]; tree->SetBranchAddress("neutronHitZ",&t_neutronHitZ);
+    float t_neutronHitT[1000]; tree->SetBranchAddress("neutronHitT",&t_neutronHitT);
+    float t_neutronHitSmearT[1000]; tree->SetBranchAddress("neutronHitSmearT",&t_neutronHitSmearT);
+    float t_neutronHitE[1000]; tree->SetBranchAddress("neutronHitE",&t_neutronHitE);
+    float t_neutronCubeE[1000]; tree->SetBranchAddress("neutronCubeE",&t_neutronCubeE);
+    float t_neutronRecoE[1000]; tree->SetBranchAddress("neutronRecoE",&t_neutronRecoE);
+    float t_neutronHitPDG[1000]; tree->SetBranchAddress("neutronHitPDG",&t_neutronHitPDG);
+    float t_neutronTrueE[1000]; tree->SetBranchAddress("neutronTrueE",&t_neutronTrueE);
+    float t_neutronParentId[1000]; tree->SetBranchAddress("neutronParentId",&t_neutronParentId);
+    float t_neutronParentPDG[1000]; tree->SetBranchAddress("neutronParentPDG",&t_neutronParentPDG);
+    float t_neutronStartingPointX[1000]; tree->SetBranchAddress("neutronStartingPointX",&t_neutronStartingPointX);
+    float t_neutronStartingPointY[1000]; tree->SetBranchAddress("neutronStartingPointY",&t_neutronStartingPointY);
+    float t_neutronStartingPointZ[1000]; tree->SetBranchAddress("neutronStartingPointZ",&t_neutronStartingPointZ);
+    float t_neutronStartingPointT[1000]; tree->SetBranchAddress("neutronStartingPointT",&t_neutronStartingPointT);
+    float t_gammaHitX[1000]; tree->SetBranchAddress("gammaHitX",&t_gammaHitX);
+    float t_gammaHitY[1000]; tree->SetBranchAddress("gammaHitY",&t_gammaHitY);
+    float t_gammaHitZ[1000]; tree->SetBranchAddress("gammaHitZ",&t_gammaHitZ);
+    float t_gammaHitT[1000]; tree->SetBranchAddress("gammaHitT",&t_gammaHitT);
+    float t_gammaHitSmearT[1000]; tree->SetBranchAddress("gammaHitSmearT",&t_gammaHitSmearT);
+    float t_gammaHitE[1000]; tree->SetBranchAddress("gammaHitE",&t_gammaHitE);
+    float t_gammaCubeE[1000]; tree->SetBranchAddress("gammaCubeE",&t_gammaCubeE);
+    float t_gammaRecoE[1000]; tree->SetBranchAddress("gammaRecoE",&t_gammaRecoE);
+    float t_gammaHitPDG[1000]; tree->SetBranchAddress("gammaHitPDG",&t_gammaHitPDG);
+    float t_gammaTrueE[1000]; tree->SetBranchAddress("gammaTrueE",&t_gammaTrueE);
+    float t_gammaParentId[1000]; tree->SetBranchAddress("gammaParentId",&t_gammaParentId);
+    float t_gammaParentPDG[1000]; tree->SetBranchAddress("gammaParentPDG",&t_gammaParentPDG);
+    float t_gammaStartingPointX[1000]; tree->SetBranchAddress("gammaStartingPointX",&t_gammaStartingPointX);
+    float t_gammaStartingPointY[1000]; tree->SetBranchAddress("gammaStartingPointY",&t_gammaStartingPointY);
+    float t_gammaStartingPointZ[1000]; tree->SetBranchAddress("gammaStartingPointZ",&t_gammaStartingPointZ);
+    float t_gammaStartingPointT[1000]; tree->SetBranchAddress("gammaStartingPointT",&t_gammaStartingPointT);
+    float t_vtxTime; tree->SetBranchAddress("vtxTime",&t_vtxTime);
+    float t_vtxTimeSmear; tree->SetBranchAddress("vtxTimeSmear",&t_vtxTimeSmear);
+    float t_hitLocationX[1000]; tree->SetBranchAddress("hitLocationX",&t_hitLocationX);
+    float t_hitLocationY[1000]; tree->SetBranchAddress("hitLocationY",&t_hitLocationY);
+    float t_hitLocationZ[1000]; tree->SetBranchAddress("hitLocationZ",&t_hitLocationZ);
+    float t_hitE[1000]; tree->SetBranchAddress("hitE",&t_hitE);
+    float t_hitT[1000]; tree->SetBranchAddress("hitT",&t_hitT);
+    //float t_nuEnergy; tree->SetBranchAddress("nuEnergy",&t_nuEnergy);
+
 
     cout<<"file loading is done"<<endl;
     cout<<"---------------------------"<<endl;
-    cout<<"total entries: "<<tree.GetEntries()*event_ratio_for_use/100<<endl;
+    cout<<"how many event? (%) :";
+    cin>>event_ratio_for_use;
+    cout<<endl;
+    cout<<"total entries: "<<tree->GetEntries()*event_ratio_for_use/100<<endl;
     cout<<"event loop starts"<<endl;
     cout<<endl;
 
-    //for(int event = 0; event < 1000; event++)
-    int nevent = tree.GetEntries()*event_ratio_for_use/100;
+    int nevent = tree->GetEntries()*event_ratio_for_use/100;
     for(int event = 0; event < nevent; event++)
     {
-        tree.GetEntry(event);
+        cout<<"\033[1Aevent: "<<((double)event*100/nevent)<<"%          \033[1000D"<<endl;
+        tree->GetEntry(event);
         //out of fiducial volume
-        if(abs(t_vtx[0]) > 50 || abs(t_vtx[1]) > 50 || abs(t_vtx[2]) > 50)
+        if(t_vtx[0] < (_3DST_x2+_3DST_x1)-FV_x/2 || t_vtx[0] > (_3DST_x1+_3DST_x2+FV_x/2))
+            continue;
+        if(t_vtx[1] < (_3DST_y2+_3DST_y1)-FV_y/2 || t_vtx[1] > (_3DST_y1+_3DST_y2+FV_y/2))
+            continue;
+        if(t_vtx[2] < (_3DST_z2+_3DST_z1)-FV_z/2 || t_vtx[2] > (_3DST_z1+_3DST_z2+FV_z/2))
             continue;
 
-        cout<<"\033[1Aevent: "<<((double)event*100/nevent)<<"%          \033[1000D"<<endl;
         channel = -1000;
         leverArm = -1000;
         angle = -1000;
@@ -282,29 +224,22 @@ int main()
         category = -1000;
         neutrinoE = -1000;
         hitPDG = -1000;
-        neutronE = -1000;
-        neutronAngle = -1000;
-        singleTransverseVariable_1P = -1000;
-        singleTransverseVariable_1pi = -1000;
-        singleTransverseVariable_0pi0P = -1000;
-        muonAngle = -1000;
-        muonMomentum = -1000;
-        Q2 = -1000;
         neutronE_allhits = 0;
-        protonMomentum = -1000;
-        pionMomentum = -1000;
         energy_deposit_in_cluster = 0;
         parentPDG = -1000;
-        protonEnergy = 0;
-        reco_neutronE = - 1000;
 
         int num_pi = 0;
         int num_pi0 = 0;
         int num_proton = 0;
         int num_neutron = 0;
-        int num_allpi = 0;
+        int num_muon = 0;
+
         for(int inFS = 0; inFS < t_nFS; inFS++)
         {
+            if(t_fsPdg[inFS] == -13)    //pion0PDG=111
+            {
+                num_muon++;
+            }
             if(abs(t_fsPdg[inFS]) == 111)    //pion0PDG=111
             {
                 num_pi0++;
@@ -312,7 +247,6 @@ int main()
             if(t_fsPdg[inFS] == 2212)
             {
                 num_proton++;
-                protonEnergy = t_fsE[inFS];
             }
             if(t_fsPdg[inFS] == 2112)
             {
@@ -322,91 +256,14 @@ int main()
             {
                 num_pi++;
             }
-            if(abs(t_fsPdg[inFS]) == 211 || abs(t_fsPdg[inFS]) == 111)
-            {
-                num_allpi++;
-            }
-        }
-        float CCchannel = 0;
-        //if(num_allpi == 0)
-        //    CCchannel = 0;  //QE
-        //if(num_allpi == 1)
-        //    CCchannel = 1;  //RES
-        //if(num_allpi > 1)
-        //    CCchannel = 2;  //DIS
-
-        //flags for channels
-        bool _1pi0p = false;
-        bool _0pi1p = false;
-        bool _0pi0p = false;
-
-        if(num_pi == 1 && num_proton == 0)
-        {
-            _1pi0p = true;
-            channel = 1;
-        }
-        if(num_pi == 0 && num_proton == 1)
-        {
-            _0pi1p = true;
-            channel = 2;
-        }
-        if(num_pi == 0 && num_proton == 0)
-        {
-            _0pi0p = true;
-            channel = 0;
         }
 
-        //if(!_1pi0p && !_0pi1p && !_0pi0p)
-        //    continue;
-        if(num_pi != 0)
+        if(num_muon == 0)
             continue;
-        if(num_neutron < 1)
+        if(num_pi != 1)
             continue;
-
-        float muon_momentum[3];
-        float proton_momentum[3];
-        float pion_momentum[3];
-        int num_muon = 0;
-        float muonE;
-        for(int inFS = 0; inFS < t_nFS; inFS++)
-        {
-            if(t_fsPdg[inFS] == -13)
-            {
-                muon_momentum[0] = t_fsPx[inFS];
-                muon_momentum[1] = t_fsPy[inFS];
-                muon_momentum[2] = t_fsPz[inFS];
-                muonE = t_fsE[inFS];
-                num_muon++;
-            }
-            if(t_fsPdg[inFS] == 2212)    //protonPDG=+-211
-            {
-                proton_momentum[0] = t_fsPx[inFS];
-                proton_momentum[1] = t_fsPy[inFS];
-                proton_momentum[2] = t_fsPz[inFS];
-            }
-            if(abs(t_fsPdg[inFS]) == 211)    //pionPDG=+-211
-            {
-                pion_momentum[0] = t_fsPx[inFS];
-                pion_momentum[1] = t_fsPy[inFS];
-                pion_momentum[2] = t_fsPz[inFS];
-            }
-        }
-        //if(num_muon > 1)
-        //{
-        //    for(int inFS = 0; inFS < t_nFS; inFS++)
-        //    {
-        //        std::cout<<"pdg: "<<t_fsPdg[inFS]<<endl;
-        //    }
-        //    cout<<"----------------------"<<endl;
-        //}
-
-        //if(num_muon != 1)
-        //    continue;
-
-        muonAngle = GetAngle(Z,muon_momentum);
-        muonMomentum = sqrt(muon_momentum[0]*muon_momentum[0]+muon_momentum[1]*muon_momentum[1]+muon_momentum[2]*muon_momentum[2]);
-        protonMomentum = sqrt(proton_momentum[0]*proton_momentum[0]+proton_momentum[1]*proton_momentum[1]+proton_momentum[2]*proton_momentum[2]);
-        pionMomentum = sqrt(pion_momentum[0]*pion_momentum[0]+pion_momentum[1]*pion_momentum[1]+pion_momentum[2]*pion_momentum[2]);
+        if(num_neutron == 0)
+            continue;
 
         std::vector<Hit> vectorHit;    //vector of all neutron+gamma hits
 
@@ -417,9 +274,17 @@ int main()
             for(int n_neutronHit = 0; n_neutronHit < 1000; n_neutronHit++)
             {
                 //out of 3dst
-                if(abs(t_neutronHitX[n_neutronHit]) > 120 || 
-                        abs(t_neutronHitY[n_neutronHit]) > 120 || 
-                        abs(t_neutronHitZ[n_neutronHit]) > 100)
+                if(t_neutronHitX[n_neutronHit] > _3DST_x2 || t_neutronHitX[n_neutronHit] < _3DST_x1)
+                    continue;
+                if(t_neutronHitY[n_neutronHit] > _3DST_y2 || t_neutronHitY[n_neutronHit] < _3DST_y1)
+                    continue;
+                if(t_neutronHitZ[n_neutronHit] > _3DST_z2 || t_neutronHitZ[n_neutronHit] < _3DST_z1)
+                    continue;
+                if(t_neutronHitX[n_neutronHit] == 0)
+                    continue;
+                if(t_neutronHitY[n_neutronHit] == 0)
+                    continue;
+                if(t_neutronHitZ[n_neutronHit] == 0)
                     continue;
 
                 //starting point == -1 is default value so remove it
@@ -442,9 +307,8 @@ int main()
                         pow(t_neutronHitZ[n_neutronHit] - t_vtx[2],2),0.5);
 
                 //calculate signal window; time of flight
-                float tof = t_neutronHitT[n_neutronHit] - t_vtxTime - 1;
-                //float tofSmear = t_neutronHitSmearT[n_neutronHit] - t_vtxTime - 1;
-                float tofSmear = tof + 0.5*gRandom->Gaus(0,1);
+                float tof = t_neutronHitT[n_neutronHit] - t_vtxTime;
+                float tofSmear = t_neutronHitSmearT[n_neutronHit] - t_vtxTimeSmear;
 
                 //Fix a bug from edep-sim
                 if(tof == 1)
@@ -462,13 +326,12 @@ int main()
                     temp_neutron_Hit.SetVtxY(t_vtx[1]);
                     temp_neutron_Hit.SetVtxZ(t_vtx[2]);
 
-                    temp_neutron_Hit.piDeath[0] = t_piDeath[0];
-                    temp_neutron_Hit.piDeath[1] = t_piDeath[1];
-                    temp_neutron_Hit.piDeath[2] = t_piDeath[2];
-
-                    temp_neutron_Hit.protonDeath[0] = t_protonDeath[0];
-                    temp_neutron_Hit.protonDeath[1] = t_protonDeath[1];
-                    temp_neutron_Hit.protonDeath[2] = t_protonDeath[2];
+                    if(num_pi > 0)
+                    {
+                        temp_neutron_Hit.piDeath[0] = t_piDeath[0];
+                        temp_neutron_Hit.piDeath[1] = t_piDeath[1];
+                        temp_neutron_Hit.piDeath[2] = t_piDeath[2];
+                    }
 
                     temp_neutron_Hit.SetTrueT(t_neutronHitT[n_neutronHit]);
                     temp_neutron_Hit.SetTrueE(t_neutronTrueE[n_neutronHit]);
@@ -480,17 +343,8 @@ int main()
                     temp_neutron_Hit.SetHitPDG(t_neutronHitPDG[n_neutronHit]);
 
                     temp_neutron_Hit.SetVtxT(t_vtxTime);
-                    if(t_neutronStartingPointX[n_neutronHit] == t_piDeath[0])
-                        temp_neutron_Hit.isFromPion = 1;
-                    else
-                        temp_neutron_Hit.isFromPion = 0;
-                    if(t_neutronStartingPointX[n_neutronHit] == t_protonDeath[0])
-                        temp_neutron_Hit.isFromProton = 1;
-                    else
-                        temp_neutron_Hit.isFromProton = 0;
                     temp_neutron_Hit.SetT(t_neutronHitT[n_neutronHit]);
                     temp_neutron_Hit.SetTSmear(t_neutronHitSmearT[n_neutronHit]);
-                    //temp_neutron_Hit.SetTSmear(t_neutronHitT[n_neutronHit]+0.5*gRandom->Gaus(0,1));
                     temp_neutron_Hit.SetX(t_neutronHitX[n_neutronHit]);
                     temp_neutron_Hit.SetY(t_neutronHitY[n_neutronHit]);
                     temp_neutron_Hit.SetZ(t_neutronHitZ[n_neutronHit]);
@@ -509,9 +363,17 @@ int main()
             for(int n_gammaHit = 0; n_gammaHit < 1000; n_gammaHit++)
             {
                 //out of 3dst
-                if(abs(t_gammaHitX[n_gammaHit]) > 120 || 
-                        abs(t_gammaHitY[n_gammaHit]) > 120 || 
-                        abs(t_gammaHitZ[n_gammaHit]) > 100)
+                if(t_gammaHitX[n_gammaHit] > _3DST_x2 || t_gammaHitX[n_gammaHit] < _3DST_x1)
+                    continue;
+                if(t_gammaHitY[n_gammaHit] > _3DST_y2 || t_gammaHitY[n_gammaHit] < _3DST_y1)
+                    continue;
+                if(t_gammaHitZ[n_gammaHit] > _3DST_z2 || t_gammaHitZ[n_gammaHit] < _3DST_z1)
+                    continue;
+                if(t_gammaHitX[n_gammaHit] == 0)
+                    continue;
+                if(t_gammaHitY[n_gammaHit] == 0)
+                    continue;
+                if(t_gammaHitZ[n_gammaHit] == 0)
                     continue;
 
                 //starting point == -1 is default value so remove it
@@ -522,7 +384,6 @@ int main()
 
                 //energy threshold
                 if(t_gammaCubeE[n_gammaHit] < energyHitCut || t_gammaCubeE[n_gammaHit] == 0)
-                    //if(t_gammaHitE[n_gammaHit] < energyHitCut || t_gammaHitE[n_gammaHit] == 0)
                     continue;
 
                 //calculate lever arm
@@ -532,9 +393,8 @@ int main()
                         pow(t_gammaHitZ[n_gammaHit] - t_vtx[2],2),0.5);
 
                 //calculate signal window; time of flight
-                float tof = t_gammaHitT[n_gammaHit] - t_vtxTime - 1;
-                //float tofSmear = t_gammaHitSmearT[n_gammaHit] - t_vtxTime - 1;
-                float tofSmear = tof + 0.5*gRandom->Gaus(0,1);
+                float tof = t_gammaHitT[n_gammaHit] - t_vtxTime;
+                float tofSmear = t_gammaHitSmearT[n_gammaHit] - t_vtxTimeSmear;
 
                 //Fix a bug from edep-sim
                 if(tof == 1)
@@ -552,13 +412,12 @@ int main()
                     temp_gamma_Hit.SetVtxY(t_vtx[1]);
                     temp_gamma_Hit.SetVtxZ(t_vtx[2]);
 
-                    temp_gamma_Hit.piDeath[0] = t_piDeath[0];
-                    temp_gamma_Hit.piDeath[1] = t_piDeath[1];
-                    temp_gamma_Hit.piDeath[2] = t_piDeath[2];
-
-                    temp_gamma_Hit.protonDeath[0] = t_protonDeath[0];
-                    temp_gamma_Hit.protonDeath[1] = t_protonDeath[1];
-                    temp_gamma_Hit.protonDeath[2] = t_protonDeath[2];
+                    if(num_pi > 0)
+                    {
+                        temp_gamma_Hit.piDeath[0] = t_piDeath[0];
+                        temp_gamma_Hit.piDeath[1] = t_piDeath[1];
+                        temp_gamma_Hit.piDeath[2] = t_piDeath[2];
+                    }
 
                     temp_gamma_Hit.SetTrueT(t_gammaHitT[n_gammaHit]);
                     temp_gamma_Hit.SetCubeE(t_gammaCubeE[n_gammaHit]);
@@ -568,17 +427,8 @@ int main()
                     temp_gamma_Hit.SetHitPDG(t_gammaHitPDG[n_gammaHit]);
 
                     temp_gamma_Hit.SetVtxT(t_vtxTime);
-                    if(t_gammaStartingPointX[n_gammaHit] == t_piDeath[0])
-                        temp_gamma_Hit.isFromPion = 1;
-                    else
-                        temp_gamma_Hit.isFromPion = 0;
-                    if(t_gammaStartingPointX[n_gammaHit] == t_protonDeath[0])
-                        temp_gamma_Hit.isFromProton = 1;
-                    else
-                        temp_gamma_Hit.isFromProton = 0;
                     temp_gamma_Hit.SetT(t_gammaHitT[n_gammaHit]);
                     temp_gamma_Hit.SetTSmear(t_gammaHitSmearT[n_gammaHit]);
-                    //temp_gamma_Hit.SetTSmear(t_gammaHitT[n_gammaHit]+0.5*gRandom->Gaus(0,1));
                     temp_gamma_Hit.SetX(t_gammaHitX[n_gammaHit]);
                     temp_gamma_Hit.SetY(t_gammaHitY[n_gammaHit]);
                     temp_gamma_Hit.SetZ(t_gammaHitZ[n_gammaHit]);
@@ -602,17 +452,9 @@ int main()
         if(vectorHit.size() != 0)
             std::sort(vectorHit.begin(), vectorHit.end(), tSortSmear);
 
-                //betaSmear_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
-        if(vectorHit.at(0).GetLeverArm()/vectorHit.at(0).GetTOFSmear()/c_velocity > 0.84)
-            continue;
-
         //sort by true time
         //if(vectorHit.size() != 0)
         //    std::sort(vectorHit.begin(), vectorHit.end(), tSort);
-
-        //parent == pi0 for gamma
-        //if(vectorHit.at(0).GetParentPdg() != 111)
-        //    continue;
 
         //map<position,pair<true,time>>
         std::map<std::tuple<float,float,float>,std::pair<int,float>> cube_fired;
@@ -622,9 +464,12 @@ int main()
         for(auto t:vectorHit)
         {
             //cout<<"x,y,z: "<<t.GetX()<<", "<<t.GetY()<<", "<<t.GetZ()<<endl;
-            XYPlane_allhits->Fill(t.GetX(),t.GetY());
-            YZPlane_allhits->Fill(t.GetY(),t.GetZ());
-            XZPlane_allhits->Fill(t.GetX(),t.GetZ());
+            if(event_display)
+            {
+                XYPlane_allhits->Fill(t.GetX(),t.GetY());
+                YZPlane_allhits->Fill(t.GetY(),t.GetZ());
+                XZPlane_allhits->Fill(t.GetX(),t.GetZ());
+            }
             std::tuple<float, float, float> temp_position = std::make_tuple(t.GetX(),t.GetY(),t.GetZ());
             cube_fired.insert(make_pair(temp_position,make_pair(1,t.GetT())));  
             cube_fired_e_deposit.insert(make_pair(temp_position,make_pair(1,t.GetCubeE())));  
@@ -648,7 +493,7 @@ int main()
             for(auto t:cube_cluster)
             {
                 //making adjacent cube 
-                int N = 2;      //adjacent cube range
+                int N = 2;      //adjacent cube range(%d cube)
                 int number_of_direction_array = 0;
                 std::tuple<float, float, float> direction[(2*N+1)*(2*N+1)*(2*N+1)];
                 for(int x = -N; x < N+1; x++)
@@ -657,7 +502,10 @@ int main()
                     {
                         for(int z = -N; z < N+1; z++)
                         {
-                            direction[number_of_direction_array] = std::make_tuple(t.GetX()+x,t.GetY()+y,t.GetZ()+z);
+                            if(IsExtendCube)
+                                direction[number_of_direction_array] = std::make_tuple(t.GetX()+1.5*x,t.GetY()+1.5*y,t.GetZ()+1.5*z);       //+- cube size * dimension
+                            else
+                                direction[number_of_direction_array] = std::make_tuple(t.GetX()+1*x,t.GetY()+1*y,t.GetZ()+1*z);       //+- cube size * dimension
                             number_of_direction_array++;
                         }
                     }
@@ -685,14 +533,6 @@ int main()
                 size_check = false;
         }
 
-        for(auto t:cube_cluster)
-        {
-            cube_XYPlane->Fill(t.GetX(),t.GetY());
-            cube_XZPlane->Fill(t.GetX(),t.GetZ());
-            cube_YZPlane->Fill(t.GetY(),t.GetZ());
-        }
-
-
         //select earliest hit 
         Hit earliest_hit;
         earliest_hit = vectorHit.at(0);
@@ -701,27 +541,32 @@ int main()
         {
             if(earliest_hit.GetParentId() == -1)
             {
-                earliest_hit.SetCategory(1);
+                earliest_hit.SetCategory(0);
             }
             if(earliest_hit.GetParentId() > 0)
-                earliest_hit.SetCategory(2);
+                earliest_hit.SetCategory(1);
         }
         if(earliest_hit.IsGamma())
         {
-            if(earliest_hit.GetParentId() == -1)
-                earliest_hit.SetCategory(3);
-            if(earliest_hit.GetParentId() > 0)
-                earliest_hit.SetCategory(4);
+            earliest_hit.SetCategory(2);
         }
 
-        if(earliest_hit.GetCategory() < 2)
-            _2d_neutron->Fill(earliest_hit.GetLeverArm(),earliest_hit.GetTOFSmear());
-        if(earliest_hit.GetCategory() > 1)
-            _2d_gamma->Fill(earliest_hit.GetLeverArm(),earliest_hit.GetTOFSmear());
+
+        if(earliest_hit.GetCategory() == -1000)
+            continue;
+        if(earliest_hit.GetHitPDG() > 10000)
+            continue;
 
         //event display
         if(event_display)
         {
+            for(auto t:cube_cluster)
+            {
+                cube_XYPlane->Fill(t.GetX(),t.GetY());
+                cube_XZPlane->Fill(t.GetX(),t.GetZ());
+                cube_YZPlane->Fill(t.GetY(),t.GetZ());
+            }
+
             gStyle->SetFrameFillColor(1);
             if(XYPlane_allhits->GetEntries() != 0)
             {
@@ -749,18 +594,13 @@ int main()
                 can1->SaveAs(Form("cube_eventview_%f_%d.pdf",earliest_hit.GetCategory(),event));
                 can1->Clear();
             }
+            XYPlane_allhits->Reset();
+            XZPlane_allhits->Reset();
+            YZPlane_allhits->Reset();
+            cube_XYPlane->Reset();
+            cube_XZPlane->Reset();
+            cube_YZPlane->Reset();
         }
-        XYPlane_allhits->Reset();
-        XZPlane_allhits->Reset();
-        YZPlane_allhits->Reset();
-        cube_XYPlane->Reset();
-        cube_XZPlane->Reset();
-        cube_YZPlane->Reset();
-
-        if(earliest_hit.GetCategory() == -1000)
-            continue;
-        if(earliest_hit.GetHitPDG() > 10000)
-            continue;
 
         parentPDG = earliest_hit.GetParentPdg();
         //cout<<"parentPDG: "<<parentPDG<<endl;
@@ -795,245 +635,47 @@ int main()
         vec_vtx_to_hit[1] = earliest_hit.GetY() - earliest_hit.GetVtxY();
         vec_vtx_to_hit[2] = earliest_hit.GetZ() - earliest_hit.GetVtxZ();
 
-        //signal
-        if(earliest_hit.GetCategory() == 1)
+        for(int i = 0; i < 3; i++)
         {
-            if(CCchannel == 0)
-                QEneuE->Fill(earliest_hit.GetTrueE());
-            if(CCchannel == 1)
-                RESneuE->Fill(earliest_hit.GetTrueE());
-            if(CCchannel == 2)
-                DISneuE->Fill(earliest_hit.GetTrueE());
-            leverarm_signal->Fill(earliest_hit.GetLeverArm());
             leverArm = earliest_hit.GetLeverArm();
-            if(channel_separate)
-            {
-                if(_1pi0p)
-                {
-                    angle_signal->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-                    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-                    distance_signal->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-                    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
-                }
-                if(_0pi1p)
-                {
-                    angle_signal->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-                    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-                    distance_signal->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-                    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-                }
-                if(_0pi0p)
-                {
-                    angle = -1000;
-                    distanceCHit = -1000;
-                }
-            }
-
-            beta_signal->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
             beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
-            TOF_signal->Fill(earliest_hit.GetTOF());
             tof = earliest_hit.GetTOF();
-            betaSmear_signal->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
             betaSmear = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
-            TOFSmear_signal->Fill(earliest_hit.GetTOFSmear());
             tofSmear = earliest_hit.GetTOFSmear();
-            CubeE_signal->Fill(earliest_hit.GetCubeE());
             cubeE = earliest_hit.GetCubeE();
-            nCubeDis_signal->Fill(cube_cluster.size());
             nCube = cube_cluster.size();
             hitPDG = earliest_hit.GetHitPDG();
-            clusterEnergy_signal->Fill(energy_deposit_in_cluster);
 
-            neutronE = earliest_hit.GetTrueE();
-            //neutronAngle = GetAngle(Z,vec_vtx_to_hit);
-        }
-
-        //secondary neutron
-        if(earliest_hit.GetCategory() == 2)
-        {
-            if(CCchannel == 0)
-                QEneuE_secondary->Fill(earliest_hit.GetTrueE());
-            if(CCchannel == 1)
-                RESneuE_secondary->Fill(earliest_hit.GetTrueE());
-            if(CCchannel == 2)
-                DISneuE_secondary->Fill(earliest_hit.GetTrueE());
-            leverarm_secondary_neutron->Fill(earliest_hit.GetLeverArm());
-            leverArm = earliest_hit.GetLeverArm();
-            if(channel_separate)
+            if(earliest_hit.GetCategory() == i)
             {
-                if(_1pi0p)
-                {
-                    angle_secondary_neutron->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-                    angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-                    distance_secondary_neutron->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-                    distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
-                }
-                if(_0pi1p)
-                {
-                    angle_secondary_neutron->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-                    angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-                    distance_secondary_neutron->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-                    distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-                }
-                if(_0pi0p)
-                {
-                    angle = -1000;
-                    distanceCHit = -1000;
-                }
-            }
-            beta_secondary_neutron->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
-            beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
-            TOF_secondary_neutron->Fill(earliest_hit.GetTOF());
-            tof = earliest_hit.GetTOF();
-            betaSmear_secondary_neutron->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
-            betaSmear = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
-            TOFSmear_secondary_neutron->Fill(earliest_hit.GetTOFSmear());
-            tofSmear = earliest_hit.GetTOFSmear();
-            CubeE_secondary_neutron->Fill(earliest_hit.GetCubeE());
-            cubeE = earliest_hit.GetCubeE();
-            nCubeDis_secondary_neutron->Fill(cube_cluster.size());
-            nCube = cube_cluster.size();
-            hitPDG = earliest_hit.GetHitPDG();
-            clusterEnergy_secondary_neutron->Fill(energy_deposit_in_cluster);
-
-            neutronE = earliest_hit.GetTrueE();
-            //neutronAngle = GetAngle(Z,vec_vtx_to_hit);
-        }
-
-        if(combinegamma)
-        {
-            //primary gamma 
-            if(earliest_hit.GetCategory() > 2)
-            {
-                leverarm_primary_gamma->Fill(earliest_hit.GetLeverArm());
-                leverArm = earliest_hit.GetLeverArm();
-                if(channel_separate)
-                {
-                    if(_1pi0p)
-                    {
-                        angle_primary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-                        angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-                        distance_primary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-                        distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
-                    }
-                    if(_0pi1p)
-                    {
-                        angle_primary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-                        angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-                        distance_primary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-                        distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-                    }
-                    if(_0pi0p)
-                    {
-                        angle = -1000;
-                        distanceCHit = -1000;
-                    }
-                }
-                beta_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity);
-                beta = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity;
-                TOF_primary_gamma->Fill(earliest_hit.GetTOF());
-                tof = earliest_hit.GetTOF();
-                betaSmear_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity);
-                betaSmear = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity;
-                TOFSmear_primary_gamma->Fill(earliest_hit.GetTOFSmear());
-                tofSmear = earliest_hit.GetTOFSmear();
-                CubeE_primary_gamma->Fill(earliest_hit.GetCubeE());
-                cubeE = earliest_hit.GetCubeE();
-                nCubeDis_primary_gamma->Fill(cube_cluster.size());
-                nCube = cube_cluster.size();
-                hitPDG = earliest_hit.GetHitPDG();
-                clusterEnergy_primary_gamma->Fill(energy_deposit_in_cluster);
-            }
-        }
-        else
-        {
-            //primary gamma 
-            if(earliest_hit.GetCategory() == 3)
-            {
-                leverarm_primary_gamma->Fill(earliest_hit.GetLeverArm());
-                leverArm = earliest_hit.GetLeverArm();
-                if(channel_separate)
-                {
-                    if(_1pi0p)
-                    {
-                        angle_primary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-                        angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-                        distance_primary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-                        distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
-                    }
-                    if(_0pi1p)
-                    {
-                        angle_primary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-                        angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-                        distance_primary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-                        distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-                    }
-                    if(_0pi0p)
-                    {
-                        angle = -1000;
-                        distanceCHit = -1000;
-                    }
-                }
-                beta_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity);
-                beta = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOF()))/c_velocity;
-                TOF_primary_gamma->Fill(earliest_hit.GetTOF());
-                tof = earliest_hit.GetTOF();
-                betaSmear_primary_gamma->Fill((earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity);
-                betaSmear = (earliest_hit.GetLeverArm()/(earliest_hit.GetTOFSmear()))/c_velocity;
-                TOFSmear_primary_gamma->Fill(earliest_hit.GetTOFSmear());
-                tofSmear = earliest_hit.GetTOFSmear();
-                CubeE_primary_gamma->Fill(earliest_hit.GetCubeE());
-                cubeE = earliest_hit.GetCubeE();
-                nCubeDis_primary_gamma->Fill(cube_cluster.size());
-                nCube = cube_cluster.size();
-                hitPDG = earliest_hit.GetHitPDG();
-                clusterEnergy_primary_gamma->Fill(energy_deposit_in_cluster);
+                hist_leverarm[i]->Fill(earliest_hit.GetLeverArm());
+                hist_beta[i]->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
+                hist_TOF[i]->Fill(earliest_hit.GetTOF());
+                hist_betaSmear[i]->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
+                hist_TOFSmear[i]->Fill(earliest_hit.GetTOFSmear());
+                hist_CubeE[i]->Fill(earliest_hit.GetCubeE());
+                hist_nCubeDis[i]->Fill(cube_cluster.size());
+                hist_clusterEnergy[i]->Fill(energy_deposit_in_cluster);
             }
 
-            //secondary gamma
-            if(earliest_hit.GetCategory() == 4)
+            if(num_pi > 0)
             {
-                leverarm_secondary_gamma->Fill(earliest_hit.GetLeverArm());
-                leverArm = earliest_hit.GetLeverArm();
-                if(channel_separate)
+                if(earliest_hit.GetCategory() == i)
                 {
-                    if(_1pi0p)
-                    {
-                        angle_secondary_gamma->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
-                        angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
-                        distance_secondary_gamma->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
-                        distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
-                    }
-                    if(_0pi1p)
-                    {
-                        angle_secondary_gamma->Fill(GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit));
-                        angle = GetAngle(vec_vtx_to_protonDeath,vec_protonDeath_to_hit);
-                        distance_secondary_gamma->Fill(GetDistance(earliest_hit.protonDeath,earliest_hit));
-                        distanceCHit = GetDistance(earliest_hit.protonDeath,earliest_hit);
-                    }
-                    if(_0pi0p)
-                    {
-                        angle = -1000;
-                        distanceCHit = -1000;
-                    }
+                    hist_angle[i]->Fill(GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit));
+                    hist_distance[i]->Fill(GetDistance(earliest_hit.piDeath,earliest_hit));
                 }
-                beta_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity);
-                beta = (earliest_hit.GetLeverArm()/earliest_hit.GetTOF())/c_velocity;
-                TOF_secondary_gamma->Fill(earliest_hit.GetTOF());
-                tof = earliest_hit.GetTOF();
-                betaSmear_secondary_gamma->Fill((earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity);
-                betaSmear = (earliest_hit.GetLeverArm()/earliest_hit.GetTOFSmear())/c_velocity;
-                TOFSmear_secondary_gamma->Fill(earliest_hit.GetTOFSmear());
-                tofSmear = earliest_hit.GetTOFSmear();
-                CubeE_secondary_gamma->Fill(earliest_hit.GetCubeE());
-                cubeE = earliest_hit.GetCubeE();
-                nCubeDis_secondary_gamma->Fill(cube_cluster.size());
-                nCube = cube_cluster.size();
-                hitPDG = earliest_hit.GetHitPDG();
-                secondary_gamma_parentID->Fill(earliest_hit.GetPDG());
-                clusterEnergy_secondary_gamma->Fill(energy_deposit_in_cluster);
+                angle = GetAngle(vec_vtx_to_piDeath,vec_piDeath_to_hit);
+                distanceCHit = GetDistance(earliest_hit.piDeath,earliest_hit);
             }
+            else
+            {
+                angle = -1000;
+                distanceCHit = -1000;
+            }
+
         }
+
         //transverse momentum
         float Px = 0;
         float Py = 0;
@@ -1047,17 +689,10 @@ int main()
             //cout<<"inf beta"<<endl;
             beta = -1000;
         }
-        if(_1pi0p)
-            singleTransverseVariable_1pi = sqrt(Px*Px+Py*Py);
-        if(_0pi1p)
-            singleTransverseVariable_1P = sqrt(Px*Px+Py*Py);
-        if(_0pi0p)
-            singleTransverseVariable_0pi0P = sqrt(Px*Px+Py*Py);
-        neutrinoE = t_nuEnergy;
-        Q2 = 4*neutrinoE*muonE*0.001*pow(TMath::Sin(TMath::Pi()*muonAngle/2),2);
+        //neutrinoE = t_nuEnergy;
+        //Q2 = 4*neutrinoE*muonE*0.001*pow(TMath::Sin(TMath::Pi()*muonAngle/2),2);
         category = earliest_hit.GetCategory();
         output_tree->Fill();
-
     }//end of event iterate
 
     outfile->Write();
@@ -1079,668 +714,360 @@ int main()
 
     TLegend * legend = new TLegend(0.5,0.6,0.9,0.9);
     legend->SetHeader("DUNE: Simulation","C");
-    legend->AddEntry(leverarm_signal,"signal","l");
-    legend->AddEntry(leverarm_secondary_neutron,"secondary neutron","l");
-    if(combinegamma)
-    {
-        legend->AddEntry(leverarm_primary_gamma,"gamma","l");
-    }
-    else
-    {
-        legend->AddEntry(leverarm_primary_gamma,"primary gamma","l");
-        legend->AddEntry(leverarm_secondary_gamma,"secondary gamma","l");
-    }
+    legend->AddEntry(hist_leverarm[0],"signal","l");
+    legend->AddEntry(hist_leverarm[1],"secondary neutron","l");
+    legend->AddEntry(hist_leverarm[2],"gamma","l");
     legend->SetTextSize(0.055);
 
     TLegend * legend1 = new TLegend(0.1,0.6,0.5,0.9);
     legend1->SetHeader("DUNE: Simulation","C");
-    legend1->AddEntry(leverarm_signal,"signal","l");
-    legend1->AddEntry(leverarm_secondary_neutron,"secondary neutron","l");
-    if(combinegamma)
-    {
-        legend1->AddEntry(leverarm_primary_gamma,"gamma","l");
-    }
-    else
-    {
-        legend1->AddEntry(leverarm_primary_gamma,"primary gamma","l");
-        legend1->AddEntry(leverarm_secondary_gamma,"secondary gamma","l");
-    }
+    legend1->AddEntry(hist_leverarm[0],"signal","l");
+    legend1->AddEntry(hist_leverarm[1],"secondary neutron","l");
+    legend1->AddEntry(hist_leverarm[2],"gamma","l");
     legend1->SetTextSize(0.055);
 
     /*
      * 2: red, signal
      * 4: blue, secondary neutron
-     * 6: purple, primary gamma
-     * 1: black, secondary gamma
+     * 6: purple, gamma
      */
 
     //leaverarm{
-    leverarm_signal->Write();
-    leverarm_signal->GetXaxis()->SetTitle("[cm]");
-    leverarm_signal->GetYaxis()->SetTitle("Normalized fraction");
-    leverarm_signal->GetYaxis()->CenterTitle(1);
-    leverarm_signal->GetXaxis()->SetLabelSize(0.045);
-    leverarm_signal->GetYaxis()->SetLabelSize(0.045);
-    leverarm_signal->GetXaxis()->SetTitleSize(0.060);
-    leverarm_signal->GetYaxis()->SetTitleSize(0.055);
-    leverarm_signal->GetYaxis()->SetTitleOffset(0.9);
-    leverarm_signal->GetXaxis()->SetTitleOffset(0.70);
-    leverarm_signal->SetLineColor(2);
-    leverarm_signal->SetLineWidth(3);
-    leverarm_signal->SetStats(0);
-    leverarm_signal->Scale(1/leverarm_signal->Integral(),"nosw2");
-    leverarm_signal->GetXaxis()->SetTitle("cm");
-    leverarm_signal->GetYaxis()->SetRangeUser(0,0.4);
-    leverarm_signal->SetTitle("lever arm");
-    leverarm_signal->Draw();
+    hist_leverarm[0]->GetXaxis()->SetTitle("[cm]");
+    hist_leverarm[0]->GetYaxis()->SetTitle("Normalized fraction");
+    hist_leverarm[0]->GetYaxis()->CenterTitle(1);
+    hist_leverarm[0]->GetXaxis()->SetLabelSize(0.045);
+    hist_leverarm[0]->GetYaxis()->SetLabelSize(0.045);
+    hist_leverarm[0]->GetXaxis()->SetTitleSize(0.060);
+    hist_leverarm[0]->GetYaxis()->SetTitleSize(0.055);
+    hist_leverarm[0]->GetYaxis()->SetTitleOffset(0.9);
+    hist_leverarm[0]->GetXaxis()->SetTitleOffset(0.70);
+    hist_leverarm[0]->GetXaxis()->SetTitle("cm");
+    hist_leverarm[0]->SetTitle("lever arm");
 
-    leverarm_secondary_neutron->Write();
-    leverarm_secondary_neutron->SetLineColor(4);
-    leverarm_secondary_neutron->SetLineWidth(3);
-    leverarm_secondary_neutron->SetStats(0);
-    leverarm_secondary_neutron->Scale(1/leverarm_secondary_neutron->Integral(),"nosw2");
-    leverarm_secondary_neutron->Draw("same");
-
-    if(combinegamma)
+    for(int i = 0; i < 3; i++)
     {
-    }
-    else
-    {
-    }
-    leverarm_primary_gamma->Write();
-    leverarm_primary_gamma->SetLineColor(6);
-    leverarm_primary_gamma->SetLineWidth(3);
-    leverarm_primary_gamma->SetStats(0);
-    leverarm_primary_gamma->Scale(1/leverarm_primary_gamma->Integral(),"nosw2");
-    leverarm_primary_gamma->Draw("same");
+        hist_leverarm[i]->Write();
+        hist_leverarm[i]->SetLineColor(2*i+2);
+        hist_leverarm[i]->SetLineWidth(3);
+        hist_leverarm[i]->SetStats(0);
+        hist_leverarm[i]->Scale(1/hist_leverarm[i]->Integral(),"nosw2");
+        hist_leverarm[i]->GetYaxis()->SetRangeUser(0,1);
+        if(i == 0)
+            hist_leverarm[i]->Draw();
+        else
+            hist_leverarm[i]->Draw("same");
 
-    leverarm_secondary_gamma->Write();
-    leverarm_secondary_gamma->SetLineColor(1);
-    leverarm_secondary_gamma->SetLineWidth(3);
-    leverarm_secondary_gamma->SetStats(0);
-    leverarm_secondary_gamma->Scale(1/leverarm_secondary_gamma->Integral(),"nosw2");
-    leverarm_secondary_gamma->Draw("same");
+    }
 
     legend->Draw();
     can->SaveAs("leverarm.pdf");
+    can->SaveAs("leverarm.C");
     can->Clear();
     //}
 
     //angle{
-    angle_signal->Write();
-    angle_signal->GetXaxis()->SetTitle("[π]");
-    angle_signal->GetYaxis()->SetTitle("Normalized fraction");
-    angle_signal->GetYaxis()->CenterTitle(1);
-    angle_signal->GetXaxis()->SetLabelSize(0.045);
-    angle_signal->GetYaxis()->SetLabelSize(0.045);
-    angle_signal->GetXaxis()->SetTitleSize(0.060);
-    angle_signal->GetYaxis()->SetTitleSize(0.055);
-    angle_signal->GetYaxis()->SetTitleOffset(0.9);
-    angle_signal->GetXaxis()->SetTitleOffset(0.70);
-    angle_signal->SetLineColor(2);
-    angle_signal->SetLineWidth(3);
-    angle_signal->SetStats(0);
-    angle_signal->Scale(1/angle_signal->Integral(),"nosw2");
-    angle_signal->GetXaxis()->SetTitle("pi");
-    angle_signal->GetYaxis()->SetRangeUser(0,0.4);
-    angle_signal->SetTitle("angle");
-    angle_signal->Draw();
+    hist_angle[0]->GetXaxis()->SetTitle("[π]");
+    hist_angle[0]->GetYaxis()->SetTitle("Normalized fraction");
+    hist_angle[0]->GetYaxis()->CenterTitle(1);
+    hist_angle[0]->GetXaxis()->SetLabelSize(0.045);
+    hist_angle[0]->GetYaxis()->SetLabelSize(0.045);
+    hist_angle[0]->GetXaxis()->SetTitleSize(0.060);
+    hist_angle[0]->GetYaxis()->SetTitleSize(0.055);
+    hist_angle[0]->GetYaxis()->SetTitleOffset(0.9);
+    hist_angle[0]->GetXaxis()->SetTitleOffset(0.70);
+    hist_angle[0]->GetXaxis()->SetTitle("pi");
+    hist_angle[0]->SetTitle("angle");
 
-    angle_secondary_neutron->Write();
-    angle_secondary_neutron->SetLineColor(4);
-    angle_secondary_neutron->SetLineWidth(3);
-    angle_secondary_neutron->SetStats(0);
-    angle_secondary_neutron->Scale(1/angle_secondary_neutron->Integral(),"nosw2");
-    angle_secondary_neutron->Draw("same");
-
-    if(combinegamma)
+    for(int i = 0; i < 3; i++)
     {
-        angle_primary_gamma->Write();
-        angle_primary_gamma->SetLineColor(6);
-        angle_primary_gamma->SetLineWidth(3);
-        angle_primary_gamma->SetStats(0);
-        angle_primary_gamma->Scale(1/angle_primary_gamma->Integral(),"nosw2");
-        angle_primary_gamma->Draw("same");
-    }
-    else
-    {
-        angle_primary_gamma->Write();
-        angle_primary_gamma->SetLineColor(6);
-        angle_primary_gamma->SetLineWidth(3);
-        angle_primary_gamma->SetStats(0);
-        angle_primary_gamma->Scale(1/angle_primary_gamma->Integral(),"nosw2");
-        angle_primary_gamma->Draw("same");
-
-        angle_secondary_gamma->Write();
-        angle_secondary_gamma->SetLineColor(1);
-        angle_secondary_gamma->SetLineWidth(3);
-        angle_secondary_gamma->SetStats(0);
-        angle_secondary_gamma->Scale(1/angle_secondary_gamma->Integral(),"nosw2");
-        angle_secondary_gamma->Draw("same");
+        hist_angle[i]->Write();
+        hist_angle[i]->SetLineColor(2*i+2);
+        hist_angle[i]->SetLineWidth(3);
+        hist_angle[i]->SetStats(0);
+        hist_angle[i]->Scale(1/hist_angle[i]->Integral(),"nosw2");
+        hist_angle[i]->GetYaxis()->SetRangeUser(0,1);
+        if(i == 0)
+            hist_angle[i]->Draw();
+        else
+            hist_angle[i]->Draw("same");
     }
 
     legend1->Draw();
     can->SaveAs("angle.pdf");
+    can->SaveAs("angle.C");
     can->Clear();
     //}
 
     //beta{
-    beta_signal->Write();
-    beta_signal->GetXaxis()->SetTitle("speed of particle/c");
-    beta_signal->GetYaxis()->SetTitle("Normalized fraction");
-    beta_signal->GetYaxis()->CenterTitle(1);
-    beta_signal->GetXaxis()->SetLabelSize(0.045);
-    beta_signal->GetYaxis()->SetLabelSize(0.045);
-    beta_signal->GetXaxis()->SetTitleSize(0.060);
-    beta_signal->GetYaxis()->SetTitleSize(0.055);
-    beta_signal->GetYaxis()->SetTitleOffset(0.9);
-    beta_signal->GetXaxis()->SetTitleOffset(0.70);
-    beta_signal->SetLineColor(2);
-    beta_signal->SetLineWidth(3);
-    beta_signal->SetStats(0);
-    beta_signal->Scale(1/beta_signal->Integral(),"nosw2");
-    beta_signal->GetXaxis()->SetTitle("speed of particle/c");
-    beta_signal->GetYaxis()->SetRangeUser(0,0.3);
-    beta_signal->SetTitle("beta");
-    beta_signal->Draw();
+    hist_beta[0]->GetXaxis()->SetTitle("speed of particle/c");
+    hist_beta[0]->GetYaxis()->SetTitle("Normalized fraction");
+    hist_beta[0]->GetYaxis()->CenterTitle(1);
+    hist_beta[0]->GetXaxis()->SetLabelSize(0.045);
+    hist_beta[0]->GetYaxis()->SetLabelSize(0.045);
+    hist_beta[0]->GetXaxis()->SetTitleSize(0.060);
+    hist_beta[0]->GetYaxis()->SetTitleSize(0.055);
+    hist_beta[0]->GetYaxis()->SetTitleOffset(0.9);
+    hist_beta[0]->GetXaxis()->SetTitleOffset(0.70);
+    hist_beta[0]->GetXaxis()->SetTitle("speed of particle/c");
+    hist_beta[0]->SetTitle("beta");
 
-    beta_secondary_neutron->Write();
-    beta_secondary_neutron->SetLineColor(4);
-    beta_secondary_neutron->SetLineWidth(3);
-    beta_secondary_neutron->SetStats(0);
-    beta_secondary_neutron->Scale(1/beta_secondary_neutron->Integral(),"nosw2");
-    beta_secondary_neutron->Draw("same");
-
-    if(combinegamma)
+    for(int i = 0; i < 0; i++)
     {
-        beta_primary_gamma->Write();
-        beta_primary_gamma->SetLineColor(6);
-        beta_primary_gamma->SetLineWidth(3);
-        beta_primary_gamma->SetStats(0);
-        beta_primary_gamma->Scale(1/beta_primary_gamma->Integral(),"nosw2");
-        beta_primary_gamma->Draw("same");
-    }
-    else
-    {
-        beta_primary_gamma->Write();
-        beta_primary_gamma->SetLineColor(6);
-        beta_primary_gamma->SetLineWidth(3);
-        beta_primary_gamma->SetStats(0);
-        beta_primary_gamma->Scale(1/beta_primary_gamma->Integral(),"nosw2");
-        beta_primary_gamma->Draw("same");
-
-        beta_secondary_gamma->Write();
-        beta_secondary_gamma->SetLineColor(1);
-        beta_secondary_gamma->SetLineWidth(3);
-        beta_secondary_gamma->SetStats(0);
-        beta_secondary_gamma->Scale(1/beta_secondary_gamma->Integral(),"nosw2");
-        beta_secondary_gamma->Draw("same");
+        hist_beta[i]->Write();
+        hist_beta[i]->SetLineColor(2*i+2);
+        hist_beta[i]->SetLineWidth(3);
+        hist_beta[i]->SetStats(0);
+        hist_beta[i]->Scale(1/hist_beta[i]->Integral(),"nosw2");
+        hist_beta[i]->GetYaxis()->SetRangeUser(0,1);
+        if(i == 0)
+            hist_beta[i]->Draw();
+        else
+            hist_beta[i]->Draw("same");
     }
 
     legend1->Draw();
     can->SaveAs("beta.pdf");
+    can->SaveAs("beta.C");
     can->Clear();
     //}
 
     //betaSmear{
-    betaSmear_signal->Write();
-    betaSmear_signal->GetXaxis()->SetTitle("speed of particle/c");
-    betaSmear_signal->GetYaxis()->SetTitle("Normalized fraction");
-    betaSmear_signal->GetYaxis()->CenterTitle(1);
-    betaSmear_signal->GetXaxis()->SetLabelSize(0.045);
-    betaSmear_signal->GetYaxis()->SetLabelSize(0.045);
-    betaSmear_signal->GetXaxis()->SetTitleSize(0.060);
-    betaSmear_signal->GetYaxis()->SetTitleSize(0.055);
-    betaSmear_signal->GetYaxis()->SetTitleOffset(0.9);
-    betaSmear_signal->GetXaxis()->SetTitleOffset(0.70);
-    betaSmear_signal->SetLineColor(2);
-    betaSmear_signal->SetLineWidth(3);
-    betaSmear_signal->SetStats(0);
-    betaSmear_signal->Scale(1/betaSmear_signal->Integral(),"nosw2");
-    betaSmear_signal->GetXaxis()->SetTitle("speed of particle/c");
-    betaSmear_signal->GetYaxis()->SetRangeUser(0,0.3);
-    betaSmear_signal->SetTitle("betaSmear");
-    betaSmear_signal->Draw();
+    hist_betaSmear[0]->GetXaxis()->SetTitle("speed of particle/c");
+    hist_betaSmear[0]->GetYaxis()->SetTitle("Normalized fraction");
+    hist_betaSmear[0]->GetYaxis()->CenterTitle(1);
+    hist_betaSmear[0]->GetXaxis()->SetLabelSize(0.045);
+    hist_betaSmear[0]->GetYaxis()->SetLabelSize(0.045);
+    hist_betaSmear[0]->GetXaxis()->SetTitleSize(0.060);
+    hist_betaSmear[0]->GetYaxis()->SetTitleSize(0.055);
+    hist_betaSmear[0]->GetYaxis()->SetTitleOffset(0.9);
+    hist_betaSmear[0]->GetXaxis()->SetTitleOffset(0.70);
+    hist_betaSmear[0]->GetXaxis()->SetTitle("speed of particle/c");
+    hist_betaSmear[0]->SetTitle("betaSmear");
 
-    betaSmear_secondary_neutron->Write();
-    betaSmear_secondary_neutron->SetLineColor(4);
-    betaSmear_secondary_neutron->SetLineWidth(3);
-    betaSmear_secondary_neutron->SetStats(0);
-    betaSmear_secondary_neutron->Scale(1/betaSmear_secondary_neutron->Integral(),"nosw2");
-    betaSmear_secondary_neutron->Draw("same");
-
-    if(combinegamma)
+    for(int i = 0; i < 3; i++)
     {
-        betaSmear_primary_gamma->Write();
-        betaSmear_primary_gamma->SetLineColor(6);
-        betaSmear_primary_gamma->SetLineWidth(3);
-        betaSmear_primary_gamma->SetStats(0);
-        betaSmear_primary_gamma->Scale(1/betaSmear_primary_gamma->Integral(),"nosw2");
-        betaSmear_primary_gamma->Draw("same");
-    }
-    else
-    {
-        betaSmear_primary_gamma->Write();
-        betaSmear_primary_gamma->SetLineColor(6);
-        betaSmear_primary_gamma->SetLineWidth(3);
-        betaSmear_primary_gamma->SetStats(0);
-        betaSmear_primary_gamma->Scale(1/betaSmear_primary_gamma->Integral(),"nosw2");
-        betaSmear_primary_gamma->Draw("same");
-
-        betaSmear_secondary_gamma->Write();
-        betaSmear_secondary_gamma->SetLineColor(1);
-        betaSmear_secondary_gamma->SetLineWidth(3);
-        betaSmear_secondary_gamma->SetStats(0);
-        betaSmear_secondary_gamma->Scale(1/betaSmear_secondary_gamma->Integral(),"nosw2");
-        betaSmear_secondary_gamma->Draw("same");
+        hist_betaSmear[i]->Write();
+        hist_betaSmear[i]->SetLineColor(2*i+2);
+        hist_betaSmear[i]->SetLineWidth(3);
+        hist_betaSmear[i]->SetStats(0);
+        hist_betaSmear[i]->Scale(1/hist_betaSmear[i]->Integral(),"nosw2");
+        hist_betaSmear[i]->GetYaxis()->SetRangeUser(0,1);
+        if(i == 0)
+            hist_betaSmear[i]->Draw();
+        else
+            hist_betaSmear[i]->Draw("same");
     }
 
     legend1->Draw();
     can->SaveAs("betaSmear.pdf");
+    can->SaveAs("betaSmear.C");
     can->Clear();
     //}
 
     //distance{
-    distance_signal->Write();
-    distance_signal->GetXaxis()->SetTitle("[cm]");
-    distance_signal->GetYaxis()->SetTitle("Normalized fraction");
-    distance_signal->GetYaxis()->CenterTitle(1);
-    distance_signal->GetXaxis()->SetLabelSize(0.045);
-    distance_signal->GetYaxis()->SetLabelSize(0.045);
-    distance_signal->GetXaxis()->SetTitleSize(0.060);
-    distance_signal->GetYaxis()->SetTitleSize(0.055);
-    distance_signal->GetYaxis()->SetTitleOffset(0.9);
-    distance_signal->GetXaxis()->SetTitleOffset(0.70);
-    distance_signal->SetLineColor(2);
-    distance_signal->SetLineWidth(3);
-    distance_signal->SetStats(0);
-    distance_signal->Scale(1/distance_signal->Integral(),"nosw2");
-    distance_signal->GetXaxis()->SetTitle("cm");
-    distance_signal->GetYaxis()->SetRangeUser(0,0.6);
-    distance_signal->SetTitle("distance b/w C and hit");
-    distance_signal->Draw();
+    hist_distance[0]->GetXaxis()->SetTitle("[cm]");
+    hist_distance[0]->GetYaxis()->SetTitle("Normalized fraction");
+    hist_distance[0]->GetYaxis()->CenterTitle(1);
+    hist_distance[0]->GetXaxis()->SetLabelSize(0.045);
+    hist_distance[0]->GetYaxis()->SetLabelSize(0.045);
+    hist_distance[0]->GetXaxis()->SetTitleSize(0.060);
+    hist_distance[0]->GetYaxis()->SetTitleSize(0.055);
+    hist_distance[0]->GetYaxis()->SetTitleOffset(0.9);
+    hist_distance[0]->GetXaxis()->SetTitleOffset(0.70);
+    hist_distance[0]->GetXaxis()->SetTitle("cm");
+    hist_distance[0]->SetTitle("distance b/w C and hit");
 
-    distance_secondary_neutron->Write();
-    distance_secondary_neutron->SetLineColor(4);
-    distance_secondary_neutron->SetLineWidth(3);
-    distance_secondary_neutron->SetStats(0);
-    distance_secondary_neutron->Scale(1/distance_secondary_neutron->Integral(),"nosw2");
-    distance_secondary_neutron->Draw("same");
-
-    if(combinegamma)
+    for(int i = 0; i < 3; i++)
     {
-        distance_primary_gamma->Write();
-        distance_primary_gamma->SetLineColor(6);
-        distance_primary_gamma->SetLineWidth(3);
-        distance_primary_gamma->SetStats(0);
-        distance_primary_gamma->Scale(1/distance_primary_gamma->Integral(),"nosw2");
-        distance_primary_gamma->Draw("same");
-    }
-    else
-    {
-        distance_primary_gamma->Write();
-        distance_primary_gamma->SetLineColor(6);
-        distance_primary_gamma->SetLineWidth(3);
-        distance_primary_gamma->SetStats(0);
-        distance_primary_gamma->Scale(1/distance_primary_gamma->Integral(),"nosw2");
-        distance_primary_gamma->Draw("same");
-
-        distance_secondary_gamma->Write();
-        distance_secondary_gamma->SetLineColor(1);
-        distance_secondary_gamma->SetLineWidth(3);
-        distance_secondary_gamma->SetStats(0);
-        distance_secondary_gamma->Scale(1/distance_secondary_gamma->Integral(),"nosw2");
-        distance_secondary_gamma->Draw("same");
+        hist_distance[i]->Write();
+        hist_distance[i]->SetLineColor(2*i+2);
+        hist_distance[i]->SetLineWidth(3);
+        hist_distance[i]->SetStats(0);
+        hist_distance[i]->Scale(1/hist_distance[i]->Integral(),"nosw2");
+        hist_distance[i]->GetYaxis()->SetRangeUser(0,1);
+        if(i == 0)
+            hist_distance[i]->Draw();
+        else
+            hist_distance[i]->Draw("same");
     }
 
     legend->Draw();
     can->SaveAs("distance.pdf");
+    can->SaveAs("distance.C");
     can->Clear();
     //}
 
     //TOF{
-    TOF_signal->Write();
-    TOF_signal->GetXaxis()->SetTitle("[ns]");
-    TOF_signal->GetYaxis()->SetTitle("Normalized fraction");
-    TOF_signal->GetYaxis()->CenterTitle(1);
-    TOF_signal->GetXaxis()->SetLabelSize(0.045);
-    TOF_signal->GetYaxis()->SetLabelSize(0.045);
-    TOF_signal->GetXaxis()->SetTitleSize(0.060);
-    TOF_signal->GetYaxis()->SetTitleSize(0.055);
-    TOF_signal->GetYaxis()->SetTitleOffset(0.9);
-    TOF_signal->GetXaxis()->SetTitleOffset(0.70);
-    TOF_signal->SetLineColor(2);
-    TOF_signal->SetLineWidth(3);
-    TOF_signal->SetStats(0);
-    TOF_signal->Scale(1/TOF_signal->Integral(),"nosw2");
-    TOF_signal->GetXaxis()->SetTitle("ns");
-    TOF_signal->GetYaxis()->SetRangeUser(0,0.7);
-    TOF_signal->SetTitle("Time of flight");
-    TOF_signal->Draw();
+    hist_TOF[0]->GetXaxis()->SetTitle("[ns]");
+    hist_TOF[0]->GetYaxis()->SetTitle("Normalized fraction");
+    hist_TOF[0]->GetYaxis()->CenterTitle(1);
+    hist_TOF[0]->GetXaxis()->SetLabelSize(0.045);
+    hist_TOF[0]->GetYaxis()->SetLabelSize(0.045);
+    hist_TOF[0]->GetXaxis()->SetTitleSize(0.060);
+    hist_TOF[0]->GetYaxis()->SetTitleSize(0.055);
+    hist_TOF[0]->GetYaxis()->SetTitleOffset(0.9);
+    hist_TOF[0]->GetXaxis()->SetTitleOffset(0.70);
+    hist_TOF[0]->GetXaxis()->SetTitle("ns");
+    hist_TOF[0]->SetTitle("Time of flight");
 
-    TOF_secondary_neutron->Write();
-    TOF_secondary_neutron->SetLineColor(4);
-    TOF_secondary_neutron->SetLineWidth(3);
-    TOF_secondary_neutron->SetStats(0);
-    TOF_secondary_neutron->Scale(1/TOF_secondary_neutron->Integral(),"nosw2");
-    TOF_secondary_neutron->Draw("same");
-
-    if(combinegamma)
+    for(int i = 0; i < 3; i++)
     {
-        TOF_primary_gamma->Write();
-        TOF_primary_gamma->SetLineColor(6);
-        TOF_primary_gamma->SetLineWidth(3);
-        TOF_primary_gamma->SetStats(0);
-        TOF_primary_gamma->Scale(1/TOF_primary_gamma->Integral(),"nosw2");
-        TOF_primary_gamma->Draw("same");
-    }
-    else
-    {
-        TOF_primary_gamma->Write();
-        TOF_primary_gamma->SetLineColor(6);
-        TOF_primary_gamma->SetLineWidth(3);
-        TOF_primary_gamma->SetStats(0);
-        TOF_primary_gamma->Scale(1/TOF_primary_gamma->Integral(),"nosw2");
-        TOF_primary_gamma->Draw("same");
-
-        TOF_secondary_gamma->Write();
-        TOF_secondary_gamma->SetLineColor(1);
-        TOF_secondary_gamma->SetLineWidth(3);
-        TOF_secondary_gamma->SetStats(0);
-        TOF_secondary_gamma->Scale(1/TOF_secondary_gamma->Integral(),"nosw2");
-        TOF_secondary_gamma->Draw("same");
+        hist_TOF[i]->Write();
+        hist_TOF[i]->SetLineColor(2*i+2);
+        hist_TOF[i]->SetLineWidth(3);
+        hist_TOF[i]->SetStats(0);
+        hist_TOF[i]->Scale(1/hist_TOF[i]->Integral(),"nosw2");
+        hist_TOF[i]->GetYaxis()->SetRangeUser(0,1);
+        if(i == 0)
+            hist_TOF[i]->Draw();
+        else
+            hist_TOF[i]->Draw("same");
     }
 
     legend->Draw();
     can->SaveAs("TOF.pdf");
+    can->SaveAs("TOF.C");
     can->Clear();
     //}
 
     //TOFSmear{
-    TOFSmear_signal->Write();
-    TOFSmear_signal->GetXaxis()->SetTitle("[ns]");
-    TOFSmear_signal->GetYaxis()->SetTitle("Normalized fraction");
-    TOFSmear_signal->GetYaxis()->CenterTitle(1);
-    TOFSmear_signal->GetXaxis()->SetLabelSize(0.045);
-    TOFSmear_signal->GetYaxis()->SetLabelSize(0.045);
-    TOFSmear_signal->GetXaxis()->SetTitleSize(0.060);
-    TOFSmear_signal->GetYaxis()->SetTitleSize(0.055);
-    TOFSmear_signal->GetYaxis()->SetTitleOffset(0.9);
-    TOFSmear_signal->GetXaxis()->SetTitleOffset(0.70);
-    TOFSmear_signal->SetLineColor(2);
-    TOFSmear_signal->SetLineWidth(3);
-    TOFSmear_signal->SetStats(0);
-    TOFSmear_signal->Scale(1/TOFSmear_signal->Integral(),"nosw2");
-    TOFSmear_signal->GetXaxis()->SetTitle("ns");
-    TOFSmear_signal->GetYaxis()->SetRangeUser(0,0.7);
-    TOFSmear_signal->SetTitle("Time of flight");
-    TOFSmear_signal->Draw();
+    hist_TOFSmear[0]->GetXaxis()->SetTitle("[ns]");
+    hist_TOFSmear[0]->GetYaxis()->SetTitle("Normalized fraction");
+    hist_TOFSmear[0]->GetYaxis()->CenterTitle(1);
+    hist_TOFSmear[0]->GetXaxis()->SetLabelSize(0.045);
+    hist_TOFSmear[0]->GetYaxis()->SetLabelSize(0.045);
+    hist_TOFSmear[0]->GetXaxis()->SetTitleSize(0.060);
+    hist_TOFSmear[0]->GetYaxis()->SetTitleSize(0.055);
+    hist_TOFSmear[0]->GetYaxis()->SetTitleOffset(0.9);
+    hist_TOFSmear[0]->GetXaxis()->SetTitleOffset(0.70);
+    hist_TOFSmear[0]->GetXaxis()->SetTitle("ns");
+    hist_TOFSmear[0]->SetTitle("Time of flight");
 
-    TOFSmear_secondary_neutron->Write();
-    TOFSmear_secondary_neutron->SetLineColor(4);
-    TOFSmear_secondary_neutron->SetLineWidth(3);
-    TOFSmear_secondary_neutron->SetStats(0);
-    TOFSmear_secondary_neutron->Scale(1/TOFSmear_secondary_neutron->Integral(),"nosw2");
-    TOFSmear_secondary_neutron->Draw("same");
-
-    if(combinegamma)
+    for(int i = 0; i < 3; i++)
     {
-        TOFSmear_primary_gamma->Write();
-        TOFSmear_primary_gamma->SetLineColor(6);
-        TOFSmear_primary_gamma->SetLineWidth(3);
-        TOFSmear_primary_gamma->SetStats(0);
-        TOFSmear_primary_gamma->Scale(1/TOFSmear_primary_gamma->Integral(),"nosw2");
-        TOFSmear_primary_gamma->Draw("same");
-    }
-    else
-    {
-        TOFSmear_primary_gamma->Write();
-        TOFSmear_primary_gamma->SetLineColor(6);
-        TOFSmear_primary_gamma->SetLineWidth(3);
-        TOFSmear_primary_gamma->SetStats(0);
-        TOFSmear_primary_gamma->Scale(1/TOFSmear_primary_gamma->Integral(),"nosw2");
-        TOFSmear_primary_gamma->Draw("same");
-
-        TOFSmear_secondary_gamma->Write();
-        TOFSmear_secondary_gamma->SetLineColor(1);
-        TOFSmear_secondary_gamma->SetLineWidth(3);
-        TOFSmear_secondary_gamma->SetStats(0);
-        TOFSmear_secondary_gamma->Scale(1/TOFSmear_secondary_gamma->Integral(),"nosw2");
-        TOFSmear_secondary_gamma->Draw("same");
+        hist_TOFSmear[i]->Write();
+        hist_TOFSmear[i]->SetLineColor(2*i+2);
+        hist_TOFSmear[i]->SetLineWidth(3);
+        hist_TOFSmear[i]->SetStats(0);
+        hist_TOFSmear[i]->Scale(1/hist_TOFSmear[i]->Integral(),"nosw2");
+        hist_TOFSmear[i]->GetYaxis()->SetRangeUser(0,1);
+        if(i == 0)
+            hist_TOFSmear[i]->Draw();
+        else
+            hist_TOFSmear[i]->Draw("same");
     }
 
     legend->Draw();
     can->SaveAs("TOFSmear.pdf");
+    can->SaveAs("TOFSmear.C");
     can->Clear();
     //}
 
     //CubeE{
-    CubeE_signal->Write();
-    CubeE_signal->GetXaxis()->SetTitle("[MeV]");
-    CubeE_signal->GetYaxis()->SetTitle("Normalized fraction");
-    CubeE_signal->GetYaxis()->CenterTitle(1);
-    CubeE_signal->GetXaxis()->SetLabelSize(0.045);
-    CubeE_signal->GetYaxis()->SetLabelSize(0.045);
-    CubeE_signal->GetXaxis()->SetTitleSize(0.060);
-    CubeE_signal->GetYaxis()->SetTitleSize(0.055);
-    CubeE_signal->GetYaxis()->SetTitleOffset(0.9);
-    CubeE_signal->GetXaxis()->SetTitleOffset(0.70);
-    CubeE_signal->SetLineColor(2);
-    CubeE_signal->SetLineWidth(3);
-    CubeE_signal->SetStats(0);
-    CubeE_signal->Scale(1/CubeE_signal->Integral(),"nosw2");
-    CubeE_signal->GetXaxis()->SetTitle("MeV");
-    CubeE_signal->GetYaxis()->SetRangeUser(0,0.7);
-    CubeE_signal->SetTitle("CubeE");
-    CubeE_signal->Draw();
+    hist_CubeE[0]->GetXaxis()->SetTitle("[MeV]");
+    hist_CubeE[0]->GetYaxis()->SetTitle("Normalized fraction");
+    hist_CubeE[0]->GetYaxis()->CenterTitle(1);
+    hist_CubeE[0]->GetXaxis()->SetLabelSize(0.045);
+    hist_CubeE[0]->GetYaxis()->SetLabelSize(0.045);
+    hist_CubeE[0]->GetXaxis()->SetTitleSize(0.060);
+    hist_CubeE[0]->GetYaxis()->SetTitleSize(0.055);
+    hist_CubeE[0]->GetYaxis()->SetTitleOffset(0.9);
+    hist_CubeE[0]->GetXaxis()->SetTitleOffset(0.70);
+    hist_CubeE[0]->GetXaxis()->SetTitle("MeV");
+    hist_CubeE[0]->SetTitle("CubeE");
 
-    CubeE_secondary_neutron->Write();
-    CubeE_secondary_neutron->SetLineColor(4);
-    CubeE_secondary_neutron->SetLineWidth(3);
-    CubeE_secondary_neutron->SetStats(0);
-    CubeE_secondary_neutron->Scale(1/CubeE_secondary_neutron->Integral(),"nosw2");
-    CubeE_secondary_neutron->Draw("same");
-
-    if(combinegamma)
+    for(int i = 0; i < 3; i++)
     {
-        CubeE_primary_gamma->Write();
-        CubeE_primary_gamma->SetLineColor(6);
-        CubeE_primary_gamma->SetLineWidth(3);
-        CubeE_primary_gamma->SetStats(0);
-        CubeE_primary_gamma->Scale(1/CubeE_primary_gamma->Integral(),"nosw2");
-        CubeE_primary_gamma->Draw("same");
-    }
-    else
-    {
-        CubeE_primary_gamma->Write();
-        CubeE_primary_gamma->SetLineColor(6);
-        CubeE_primary_gamma->SetLineWidth(3);
-        CubeE_primary_gamma->SetStats(0);
-        CubeE_primary_gamma->Scale(1/CubeE_primary_gamma->Integral(),"nosw2");
-        CubeE_primary_gamma->Draw("same");
-
-        CubeE_secondary_gamma->Write();
-        CubeE_secondary_gamma->SetLineColor(1);
-        CubeE_secondary_gamma->SetLineWidth(3);
-        CubeE_secondary_gamma->SetStats(0);
-        CubeE_secondary_gamma->Scale(1/CubeE_secondary_gamma->Integral(),"nosw2");
-        CubeE_secondary_gamma->Draw("same");
+        hist_CubeE[i]->Write();
+        hist_CubeE[i]->SetLineColor(2*i+2);
+        hist_CubeE[i]->SetLineWidth(3);
+        hist_CubeE[i]->SetStats(0);
+        hist_CubeE[i]->Scale(1/hist_CubeE[i]->Integral(),"nosw2");
+        hist_CubeE[i]->GetYaxis()->SetRangeUser(0,1);
+        if(i == 0)
+            hist_CubeE[i]->Draw();
+        else
+            hist_CubeE[i]->Draw("same");
     }
 
     legend->Draw();
     can->SaveAs("CubeE.pdf");
+    can->SaveAs("CubeE.C");
     can->Clear();
     //}
 
     //nCube{
-    nCubeDis_signal->Write();
-    nCubeDis_signal->GetXaxis()->SetTitle("number of fired cube");
-    nCubeDis_signal->GetYaxis()->SetTitle("Normalized fraction");
-    nCubeDis_signal->GetYaxis()->CenterTitle(1);
-    nCubeDis_signal->GetXaxis()->SetLabelSize(0.045);
-    nCubeDis_signal->GetYaxis()->SetLabelSize(0.045);
-    nCubeDis_signal->GetXaxis()->SetTitleSize(0.060);
-    nCubeDis_signal->GetYaxis()->SetTitleSize(0.055);
-    nCubeDis_signal->GetYaxis()->SetTitleOffset(0.9);
-    nCubeDis_signal->GetXaxis()->SetTitleOffset(0.70);
-    nCubeDis_signal->GetYaxis()->SetRangeUser(0,0.5);
-    nCubeDis_signal->SetLineColor(2);
-    nCubeDis_signal->SetLineColor(2);
-    nCubeDis_signal->SetLineWidth(3);
-    nCubeDis_signal->SetStats(0);
-    nCubeDis_signal->Scale(1/nCubeDis_signal->Integral(),"nosw2");
-    nCubeDis_signal->GetXaxis()->SetTitle("number of fired cubes");
-    nCubeDis_signal->GetYaxis()->SetRangeUser(0,0.5);
-    nCubeDis_signal->SetTitle("number of cube");
-    nCubeDis_signal->Draw();
+    hist_nCubeDis[0]->GetXaxis()->SetTitle("number of fired cube");
+    hist_nCubeDis[0]->GetYaxis()->SetTitle("Normalized fraction");
+    hist_nCubeDis[0]->GetYaxis()->CenterTitle(1);
+    hist_nCubeDis[0]->GetXaxis()->SetLabelSize(0.045);
+    hist_nCubeDis[0]->GetYaxis()->SetLabelSize(0.045);
+    hist_nCubeDis[0]->GetXaxis()->SetTitleSize(0.060);
+    hist_nCubeDis[0]->GetYaxis()->SetTitleSize(0.055);
+    hist_nCubeDis[0]->GetYaxis()->SetTitleOffset(0.9);
+    hist_nCubeDis[0]->GetXaxis()->SetTitleOffset(0.70);
+    hist_nCubeDis[0]->GetXaxis()->SetTitle("number of fired cubes");
+    hist_nCubeDis[0]->SetTitle("number of cube");
 
-    nCubeDis_secondary_neutron->Write();
-    nCubeDis_secondary_neutron->SetLineColor(4);
-    nCubeDis_secondary_neutron->SetLineColor(4);
-    nCubeDis_secondary_neutron->SetLineWidth(3);
-    nCubeDis_secondary_neutron->SetStats(0);
-    nCubeDis_secondary_neutron->Scale(1/nCubeDis_secondary_neutron->Integral(),"nosw2");
-    nCubeDis_secondary_neutron->Draw("same");
-
-    if(combinegamma)
+    for(int i = 0; i < 3; i++)
     {
-        nCubeDis_primary_gamma->Write();
-        nCubeDis_primary_gamma->SetLineColor(6);
-        nCubeDis_primary_gamma->SetLineColor(6);
-        nCubeDis_primary_gamma->SetLineWidth(3);
-        nCubeDis_primary_gamma->SetStats(0);
-        nCubeDis_primary_gamma->Scale(1/nCubeDis_primary_gamma->Integral(),"nosw2");
-        nCubeDis_primary_gamma->Draw("same");
-    }
-    else
-    {
-        nCubeDis_primary_gamma->Write();
-        nCubeDis_primary_gamma->SetLineColor(6);
-        nCubeDis_primary_gamma->SetLineColor(6);
-        nCubeDis_primary_gamma->SetLineWidth(3);
-        nCubeDis_primary_gamma->SetStats(0);
-        nCubeDis_primary_gamma->Scale(1/nCubeDis_primary_gamma->Integral(),"nosw2");
-        nCubeDis_primary_gamma->Draw("same");
-
-        nCubeDis_secondary_gamma->Write();
-        nCubeDis_secondary_gamma->SetLineColor(1);
-        nCubeDis_secondary_gamma->SetLineColor(1);
-        nCubeDis_secondary_gamma->SetLineWidth(3);
-        nCubeDis_secondary_gamma->SetStats(0);
-        nCubeDis_secondary_gamma->Scale(1/nCubeDis_secondary_gamma->Integral(),"nosw2");
-        nCubeDis_secondary_gamma->Draw("same");
+        hist_nCubeDis[i]->Write();
+        hist_nCubeDis[i]->SetLineColor(2*i+2);
+        hist_nCubeDis[i]->SetLineWidth(3);
+        hist_nCubeDis[i]->SetStats(0);
+        hist_nCubeDis[i]->Scale(1/hist_nCubeDis[i]->Integral(),"nosw2");
+        hist_nCubeDis[i]->GetYaxis()->SetRangeUser(0,1);
+        if(i == 0)
+            hist_nCubeDis[i]->Draw();
+        else
+            hist_nCubeDis[i]->Draw("same");
     }
 
     legend->Draw();
     can->SaveAs("nCubeDis.pdf");
+    can->SaveAs("nCubeDis.C");
     can->Clear();
     //}
 
     //clusterEnergy{
-    clusterEnergy_signal->Write();
-    clusterEnergy_signal->GetXaxis()->SetTitle("cluster energy");
-    clusterEnergy_signal->GetYaxis()->SetTitle("Normalized fraction");
-    clusterEnergy_signal->GetYaxis()->CenterTitle(1);
-    clusterEnergy_signal->GetXaxis()->SetLabelSize(0.045);
-    clusterEnergy_signal->GetYaxis()->SetLabelSize(0.045);
-    clusterEnergy_signal->GetXaxis()->SetTitleSize(0.060);
-    clusterEnergy_signal->GetYaxis()->SetTitleSize(0.055);
-    clusterEnergy_signal->GetYaxis()->SetTitleOffset(0.9);
-    clusterEnergy_signal->GetXaxis()->SetTitleOffset(0.70);
-    clusterEnergy_signal->GetYaxis()->SetRangeUser(0,0.5);
-    clusterEnergy_signal->SetLineColor(2);
-    clusterEnergy_signal->SetLineColor(2);
-    clusterEnergy_signal->SetLineWidth(3);
-    clusterEnergy_signal->SetStats(0);
-    clusterEnergy_signal->Scale(1/clusterEnergy_signal->Integral(),"nosw2");
-    clusterEnergy_signal->GetXaxis()->SetTitle("cluster energy [MeV]");
-    clusterEnergy_signal->GetYaxis()->SetRangeUser(0,0.5);
-    clusterEnergy_signal->SetTitle("cluster energy");
-    clusterEnergy_signal->Draw();
+    hist_clusterEnergy[0]->GetXaxis()->SetTitle("cluster energy");
+    hist_clusterEnergy[0]->GetYaxis()->SetTitle("Normalized fraction");
+    hist_clusterEnergy[0]->GetYaxis()->CenterTitle(1);
+    hist_clusterEnergy[0]->GetXaxis()->SetLabelSize(0.045);
+    hist_clusterEnergy[0]->GetYaxis()->SetLabelSize(0.045);
+    hist_clusterEnergy[0]->GetXaxis()->SetTitleSize(0.060);
+    hist_clusterEnergy[0]->GetYaxis()->SetTitleSize(0.055);
+    hist_clusterEnergy[0]->GetYaxis()->SetTitleOffset(0.9);
+    hist_clusterEnergy[0]->GetXaxis()->SetTitleOffset(0.70);
+    hist_clusterEnergy[0]->GetXaxis()->SetTitle("cluster energy [MeV]");
+    hist_clusterEnergy[0]->SetTitle("cluster energy");
 
-    clusterEnergy_secondary_neutron->Write();
-    clusterEnergy_secondary_neutron->SetLineColor(4);
-    clusterEnergy_secondary_neutron->SetLineColor(4);
-    clusterEnergy_secondary_neutron->SetLineWidth(3);
-    clusterEnergy_secondary_neutron->SetStats(0);
-    clusterEnergy_secondary_neutron->Scale(1/clusterEnergy_secondary_neutron->Integral(),"nosw2");
-    clusterEnergy_secondary_neutron->Draw("same");
-
-    if(combinegamma)
+    for(int i = 0; i < 3; i++)
     {
-        clusterEnergy_primary_gamma->Write();
-        clusterEnergy_primary_gamma->SetLineColor(6);
-        clusterEnergy_primary_gamma->SetLineColor(6);
-        clusterEnergy_primary_gamma->SetLineWidth(3);
-        clusterEnergy_primary_gamma->SetStats(0);
-        clusterEnergy_primary_gamma->Scale(1/clusterEnergy_primary_gamma->Integral(),"nosw2");
-        clusterEnergy_primary_gamma->Draw("same");
-    }
-    else
-    {
-        clusterEnergy_primary_gamma->Write();
-        clusterEnergy_primary_gamma->SetLineColor(6);
-        clusterEnergy_primary_gamma->SetLineColor(6);
-        clusterEnergy_primary_gamma->SetLineWidth(3);
-        clusterEnergy_primary_gamma->SetStats(0);
-        clusterEnergy_primary_gamma->Scale(1/clusterEnergy_primary_gamma->Integral(),"nosw2");
-        clusterEnergy_primary_gamma->Draw("same");
-
-        clusterEnergy_secondary_gamma->Write();
-        clusterEnergy_secondary_gamma->SetLineColor(1);
-        clusterEnergy_secondary_gamma->SetLineColor(1);
-        clusterEnergy_secondary_gamma->SetLineWidth(3);
-        clusterEnergy_secondary_gamma->SetStats(0);
-        clusterEnergy_secondary_gamma->Scale(1/clusterEnergy_secondary_gamma->Integral(),"nosw2");
-        clusterEnergy_secondary_gamma->Draw("same");
+        hist_clusterEnergy[i]->Write();
+        hist_clusterEnergy[i]->SetLineColor(2*i+2);
+        hist_clusterEnergy[i]->SetLineWidth(3);
+        hist_clusterEnergy[i]->SetStats(0);
+        hist_clusterEnergy[i]->Scale(1/hist_clusterEnergy[i]->Integral(),"nosw2");
+        hist_clusterEnergy[i]->GetYaxis()->SetRangeUser(0,1);
+        if(i == 0)
+            hist_clusterEnergy[i]->Draw();
+        else
+            hist_clusterEnergy[i]->Draw("same");
     }
 
     legend->Draw();
     can->SaveAs("clusterEnergy.pdf");
+    can->SaveAs("clusterEnergy.C");
     can->Clear();
     //}
 
-    secondary_gamma_parentID->Draw();
-    can->SaveAs("secondary_gamma_parentID.pdf");
-    can->Clear();
-
-    QEneuE->Draw();
-    can->SaveAs("QEneuE.pdf");
-    can->Clear();
-
-    RESneuE->Draw();
-    can->SaveAs("RESneuE.pdf");
-    can->Clear();
-
-    DISneuE->Draw();
-    can->SaveAs("DISneuE.pdf");
-    can->Clear();
-
-    QEneuE_secondary->Draw();
-    can->SaveAs("QEneuE_secondary.pdf");
-    can->Clear();
-
-    RESneuE_secondary->Draw();
-    can->SaveAs("RESneuE_secondary.pdf");
-    can->Clear();
-
-    DISneuE_secondary->Draw();
-    can->SaveAs("DISneuE_secondary.pdf");
-    can->Clear();
     fi1->Close();
 
     cout<<"making output files is done"<<endl;
     cout<<"---------------------------"<<endl;
     cout<<"all done"<<endl;
 
-    TCanvas * can10 = new TCanvas;
-    can10->Divide(2,1);
-    can10->cd(1);
-    can10->cd(1)->SetLogz();
-    _2d_neutron->Draw("colz");
-    can10->cd(2);
-    can10->cd(2)->SetLogz();
-    _2d_gamma->Draw("colz");
-    can10->SaveAs("2d.pdf");
     return 0;
 }

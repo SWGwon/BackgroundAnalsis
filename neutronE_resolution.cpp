@@ -29,9 +29,6 @@ int main()
     }
     float energyHitCut = 0.5; //energy deposit threshold for cube
     const double c_velocity = 29.9792458;
-    //histograms{
-
-    //}
     gErrorIgnoreLevel = kWarning;
 
     int filenum;
@@ -39,20 +36,12 @@ int main()
     cout<<"file loading..."<<endl;
 
     TChain tree("tree");
-    //for(int i = 1; i != filenum+1; i++)
-    //{ //cout<<"\033[1APROD"<<101<<": "<<(double)(i*100/filenum)<<"%\033[1000D"<<endl;
-    //    string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion_wNuE.root",i);
-    //    //string file = Form("/Users/gwon/Geo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
-    //    //string file = Form("/pnfs/dune/persistent/users/gyang/3DST/dump/standardGeo12/PROD101/RHC_%d_wGamma_2ndVersion.root",i);
-    //    tree.Add(TString(file));
-    //}
-    tree.Add("/Users/gwon/Geo13/PROD102/*.root");
+    for(int i = 1; i < 1000; i++)
+    {
+        tree.Add(Form("/pnfs/dune/persistent/users/gyang/3DST/dump/standardGeo13/PROD102/RHC_%d.root",i));
+    }
+    //tree.Add("/pnfs/dune/persistent/users/gyang/3DST/dump/standardGeo13/PROD102/RHC_*extendCube.root");
 
-    //vectors I defined
-    float vec_piDeath_to_hit[3];
-    float vec_protonDeath_to_hit[3];
-    float vec_vtx_to_piDeath[3];
-    float vec_vtx_to_protonDeath[3];
 
     //SetBranchAddress
     float t_vtx[3]; tree.SetBranchAddress("vtx",&t_vtx);
@@ -78,6 +67,7 @@ int main()
     float t_gammaParentId[1000]; tree.SetBranchAddress("gammaParentId",&t_gammaParentId);
     float t_gammaParentPDG[1000]; tree.SetBranchAddress("gammaParentPDG",&t_gammaParentPDG);
     float t_vtxTime; tree.SetBranchAddress("vtxTime",&t_vtxTime);
+    float t_vtxTimeSmear; tree.SetBranchAddress("vtxTimeSmear",&t_vtxTimeSmear);
 
     cout<<"file loading is done"<<endl;
     cout<<"---------------------------"<<endl;
@@ -140,13 +130,19 @@ int main()
 
             //calculate lever arm
             float leverArm = pow(
-                    pow(t_neutronHitX[n_neutronHit] - t_vtx[0],2)+
-                    pow(t_neutronHitY[n_neutronHit] - t_vtx[1],2)+
-                    pow(t_neutronHitZ[n_neutronHit] - t_vtx[2],2),0.5);
+                    pow(t_neutronHitX[n_neutronHit]+gRandom->Gaus(0,1./pow(12.,0.5)) - t_vtx[0],2)+
+                    pow(t_neutronHitY[n_neutronHit]+gRandom->Gaus(0,1./pow(12.,0.5)) - t_vtx[1],2)+
+                    pow(t_neutronHitZ[n_neutronHit]+gRandom->Gaus(0,1./pow(12.,0.5)) - t_vtx[2],2),0.5);
+
+            float true_leverArm = pow(
+                    pow(t_neutronHitX[n_neutronHit]- t_vtx[0],2)+
+                    pow(t_neutronHitY[n_neutronHit]- t_vtx[1],2)+
+                    pow(t_neutronHitZ[n_neutronHit]- t_vtx[2],2),0.5);
 
             //calculate signal window; time of flight
-            float tof = t_neutronHitT[n_neutronHit] - t_vtxTime - 1;
-            float tofSmear = t_neutronHitSmearT[n_neutronHit] - t_vtxTime - 1;
+            float tof = t_neutronHitT[n_neutronHit] - t_vtxTime;
+            //float tofSmear = t_neutronHitSmearT[n_neutronHit] - t_vtxTimeSmear;
+            float tofSmear = t_neutronHitT[n_neutronHit]+gRandom->Gaus(0,0.5)/pow(t_neutronCubeE[n_neutronHit]/1.5,0.5) - t_vtxTime+gRandom->Gaus(0,0.5);
 
             //Fix a bug from edep-sim
             if(tof == 1)
@@ -182,72 +178,6 @@ int main()
             }
         }
 
-        Hit temp_gamma_Hit;
-
-        for(int n_gammaHit = 0; n_gammaHit < 1000; n_gammaHit++)
-        {
-            //out of 3dst
-                if(t_gammaHitX[n_gammaHit] < _3DST_x1 || t_gammaHitX[n_gammaHit] > _3DST_x2)
-                    continue;
-                if(t_gammaHitY[n_gammaHit] < _3DST_y1 || t_gammaHitY[n_gammaHit] > _3DST_y2)
-                    continue;
-                if(t_gammaHitZ[n_gammaHit] < _3DST_z1 || t_gammaHitZ[n_gammaHit] > _3DST_z2)
-                    continue;
-                if(t_gammaHitX[n_gammaHit] == 0)
-                    continue;
-                if(t_gammaHitY[n_gammaHit] == 0)
-                    continue;
-                if(t_gammaHitZ[n_gammaHit] == 0)
-                    continue;
-
-            //energy threshold
-            if(t_gammaCubeE[n_gammaHit] < energyHitCut || t_gammaCubeE[n_gammaHit] == 0)
-                continue;
-
-            //calculate lever arm
-            float leverArm = pow(
-                    pow(t_gammaHitX[n_gammaHit] - t_vtx[0],2)+
-                    pow(t_gammaHitY[n_gammaHit] - t_vtx[1],2)+
-                    pow(t_gammaHitZ[n_gammaHit] - t_vtx[2],2),0.5);
-
-            //calculate signal window; time of flight
-            float tof = t_gammaHitT[n_gammaHit] - t_vtxTime - 1;
-            float tofSmear = t_gammaHitSmearT[n_gammaHit] - t_vtxTime - 1;
-
-            //Fix a bug from edep-sim
-            if(tof == 1)
-                tof = 0.5;
-
-            if(tof > 0)
-            {
-                temp_gamma_Hit.SetTOF(tof);
-                temp_gamma_Hit.SetTOFSmear(tofSmear);
-                temp_gamma_Hit.SetLeverArm(leverArm);
-
-                temp_gamma_Hit.SetVtxX(t_vtx[0]);
-                temp_gamma_Hit.SetVtxY(t_vtx[1]);
-                temp_gamma_Hit.SetVtxZ(t_vtx[2]);
-
-                temp_gamma_Hit.SetTrueT(t_gammaHitT[n_gammaHit]);
-                temp_gamma_Hit.SetCubeE(t_gammaCubeE[n_gammaHit]);
-
-                temp_gamma_Hit.SetParentId(t_gammaParentId[n_gammaHit]);
-                temp_gamma_Hit.SetParentPdg(t_gammaParentPDG[n_gammaHit]);
-                temp_gamma_Hit.SetHitPDG(t_gammaHitPDG[n_gammaHit]);
-
-                temp_gamma_Hit.SetVtxT(t_vtxTime);
-                temp_gamma_Hit.SetT(t_gammaHitT[n_gammaHit]);
-                temp_gamma_Hit.SetX(t_gammaHitX[n_gammaHit]);
-                temp_gamma_Hit.SetY(t_gammaHitY[n_gammaHit]);
-                temp_gamma_Hit.SetZ(t_gammaHitZ[n_gammaHit]);
-                temp_gamma_Hit.SetParentId(t_gammaParentId[n_gammaHit]);
-                temp_gamma_Hit.SetIsGamma(true);
-                temp_gamma_Hit.SetCubeE(t_gammaCubeE[n_gammaHit]);
-
-                vectorHit.push_back(temp_gamma_Hit);
-            }
-        }
-
         if(vectorHit.size() == 0)
             continue;
 
@@ -258,9 +188,6 @@ int main()
         //sort by time smear
         if(vectorHit.size() != 0)
             std::sort(vectorHit.begin(), vectorHit.end(), tSortSmear);
-        //sort by time
-        //if(vectorHit.size() != 0)
-        //    std::sort(vectorHit.begin(), vectorHit.end(), tSort);
 
         //select earliest hit 
         Hit earliest_hit;
@@ -293,24 +220,22 @@ int main()
         if(earliest_hit.GetCategory() == 1)
         {
             lev_time->Fill(earliest_hit.GetLeverArm(),earliest_hit.GetTOF());
-            lev_time_smeared->Fill(earliest_hit.GetLeverArm()+gRandom->Gaus(0,0.3),earliest_hit.GetTOFSmear());
+            lev_time_smeared->Fill(earliest_hit.GetLeverArm(),earliest_hit.GetTOFSmear());
             //(true-smear)/true
             float beta = earliest_hit.GetLeverArm()/(c_velocity*earliest_hit.GetTOF());
-            float beta_smear = (earliest_hit.GetLeverArm()+gRandom->Gaus(0,0.3))/(c_velocity*earliest_hit.GetTOF());
+            float beta_smear = (earliest_hit.GetLeverArm())/(c_velocity*earliest_hit.GetTOFSmear());
             float true_E, smear_E;
-            //true_E = 939.565*(1./pow(1-pow(beta,2),0.5)-1);
-            //smear_E = 939.565*(1./pow(1-pow(beta_smear,2),0.5)-1);
-            true_E = 0.7245*pow((earliest_hit.GetLeverArm()/earliest_hit.GetTOF()),2);
-            smear_E = 0.7245*pow(((earliest_hit.GetLeverArm()+gRandom->Gaus(0,0.3))/earliest_hit.GetTOFSmear()),2);
-            //cout<<"trueE:"<<true_E<<endl;
-            //cout<<"smear_E:"<<smear_E<<endl;
+            true_E = 939.565*(1./pow(1-pow(beta,2),0.5)-1);
+            smear_E = 939.565*(1./pow(1-pow(beta_smear,2),0.5)-1);
+            //cout<<"trueE :"<<true_E<<endl;
+            //cout<<"smearE: "<<smear_E<<endl;
             for(int i = 0; i < 20; i++)
             {
                 if(10*i< earliest_hit.GetLeverArm() && earliest_hit.GetLeverArm() < 10*(i+1))
                 {
                     for(int j = 0; j < 25; j++)
                     {
-                        if(j < earliest_hit.GetTOF() && earliest_hit.GetTOF() < j+1)
+                        if(j < earliest_hit.GetTOFSmear() && earliest_hit.GetTOFSmear() < j+1)
                         {
                             hist_rms[i][j].Fill((true_E-smear_E)/true_E);
                         }
@@ -349,9 +274,10 @@ int main()
 
     TCanvas * can4 = new TCanvas;
     rms->SetStats(0);
+    rms->GetZaxis()->SetRangeUser(0,0.6);
     //rms->GetZaxis()->SetRangeUser(0,0.3);
     rms->Draw("colz");
-    can4->SaveAs("rms.pdf");
+    can4->SaveAs("rms.C");
 
     cout<<"making output files is done"<<endl;
     cout<<"---------------------------"<<endl;
