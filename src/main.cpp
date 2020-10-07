@@ -1,10 +1,24 @@
 #include "hit.h"
 #include "functions.h"
+#include <unistd.h>
 
 using namespace std;
 
+void help()
+{
+    cout<<"Usage: ./BackgroundAnalysis [OPTION]"<<endl;
+    cout<<"Options:"<<endl;
+    cout<<"  --help, -h               : show this help message and exit"<<endl;
+    cout<<"  --output, -o [FILE NAME] : output file name"<<endl;
+    cout<<"  --display, -d            : save event display"<<endl;
+    cout<<"  --noGamma                : not include gamma hits"<<endl;
+    cout<<"  --noNeutron              : not include neutron hits"<<endl;
+    cout<<"  -u [NUMBER]              : using [NUMBER]\% of entry"<<endl;
+}
+
 int main(int argc, char * argv[])
 {
+    gErrorIgnoreLevel = 6000;
     float _3DST_x1 = -120; 
     float _3DST_x2 = 120; 
     float _3DST_y1 = -120; 
@@ -15,17 +29,73 @@ int main(int argc, char * argv[])
     float FV_y = 100;
     float FV_z = 100;
 
-    bool include_gammaHit = true;
-    bool include_neutronHit = true;
-    bool event_display = false;
-    bool IsExtendCube = false;
+    int IsExtendCube = false;
+    int event_display = false;
+    int include_gammaHit = true;
+    int include_neutronHit = true;
+    int numPionRequire = 0;
     float event_ratio_for_use = 100;
+    string name_output_file = "variables.root";
+    string name_input_file;
+
+    struct option options[] = 
+        {
+            {"extendCube", 0, &IsExtendCube, true},
+            {"display", 0, 0, 'd'},
+            {"noGamma", 0, &include_gammaHit, false},
+            {"noNeutron", 0, &include_neutronHit, false},
+            {"output", 1, 0, 'o'},
+            {"help", 0, 0, 'h'},
+            {"pion", 1, 0, 'p'}
+        };
+
+    int option_index = 0;
+    int option = 0;
+
+    while((option = getopt_long(argc, argv, "dho:u:i:p:", options, &option_index))!=EOF)
+    {
+        switch(option)
+        {
+            case 'h' :
+                {
+                    help();
+                    return 0;
+                }
+            case 'o' :
+                {
+                    name_output_file = optarg;
+                    break;
+                }
+            case 'u' :
+                {
+                    std::stringstream temp(optarg);
+                    temp >> event_ratio_for_use;
+                    break;
+                }
+            case 'd' :
+                {
+                    event_display = true;
+                    break;
+                }
+            case 'i' :
+                {
+                    name_input_file = optarg;
+                    break;
+                }
+            case 'p' :
+                {
+                    std::stringstream temp(optarg);
+                    temp >> numPionRequire;
+                    break;
+                }
+        }
+    }
+
 
     //histograms,
     //0: primary neutron
     //1: secondary neutron
     //2: primary gamma
-    //3: secondary gamma
     //{
     TH1F * hist_leverarm[3];
     TH1F * hist_angle[3];
@@ -95,7 +165,7 @@ int main(int argc, char * argv[])
     cout<<"---------------------------"<<endl;
     cout<<"file loading..."<<endl;
 
-    TFile * outfile = new TFile("variables.root","RECREATE");
+    TFile * outfile = new TFile(name_output_file.c_str(),"RECREATE");
     TTree * output_tree = new TTree("output_tree", "output_tree");
 
     //variable for output root file
@@ -124,18 +194,22 @@ int main(int argc, char * argv[])
     float vec_vtx_to_protonDeath[3];
 
     TChain * tree = new TChain("tree");
-    for(int i = 1; i < 1000; i++)
+    if(name_input_file.size() == 0)
     {
-        cout<<i<<"th file"<<endl;
-        //TFile * f = new TFile(Form("/pnfs/dune/persistent/users/gyang/3DST/dump/standardGeo13/PROD102/RHC_%d_extendCube.root",i));
-        TFile * f = new TFile(Form("/Users/gwon/Geo13/PROD102/RHC_%d.root",i));
-        if(!f->IsOpen())
-            continue;
-        if(!f->GetListOfKeys()->Contains("tree"))
-            continue;
-        tree->Add(Form("/Users/gwon/Geo13/PROD102/RHC_%d.root",i));
-        delete f;
+        for(int i = 1; i < 200; i++)
+        {
+            //TFile * f = new TFile(Form("/pnfs/dune/persistent/users/gyang/3DST/dump/standardGeo13/PROD102/RHC_%d_extendCube.root",i));
+            TFile * f = new TFile(Form("/Users/gwon/Geo13/PROD102/RHC_%d.root",i));
+            if(!f->IsOpen())
+                continue;
+            if(!f->GetListOfKeys()->Contains("tree"))
+                continue;
+            tree->Add(Form("/Users/gwon/Geo13/PROD102/RHC_%d.root",i));
+            delete f;
+        }
     }
+    else
+        tree->Add(name_input_file.c_str());
 
     //SetBranchAddress
     float t_vtx[3]; tree->SetBranchAddress("vtx",&t_vtx);
@@ -189,11 +263,23 @@ int main(int argc, char * argv[])
     //float t_nuEnergy; tree->SetBranchAddress("nuEnergy",&t_nuEnergy);
 
 
-    cout<<"file loading is done"<<endl;
+    cout<<boolalpha;
     cout<<"---------------------------"<<endl;
-    cout<<"how many event? (%) :";
-    cin>>event_ratio_for_use;
-    cout<<endl;
+    cout<<"Options"<<endl;
+    cout<<"|-Output file: "<<name_output_file<<endl;
+    cout<<"|-IsExtendCube: "<<(bool)IsExtendCube<<endl;
+    cout<<"|-event display: "<<(bool)event_display<<endl;
+    cout<<"|-include gamma: "<<(bool)include_gammaHit<<endl;
+    cout<<"|-include neutron: "<<(bool)include_neutronHit<<endl;
+    cout<<"|-number of pion: "<<numPionRequire<<endl;
+    cout<<"|-use "<<event_ratio_for_use<<"\% of entry"<<endl;
+    cout<<"---------------------------"<<endl;
+    cout<<"run? (Y/N)";
+    string run;
+    cin>>run;
+    if(run != "Y")
+        return 0;
+    cout<<"---------------------------"<<endl;
     cout<<"total entries: "<<tree->GetEntries()*event_ratio_for_use/100<<endl;
     cout<<"event loop starts"<<endl;
     cout<<endl;
@@ -260,8 +346,12 @@ int main(int argc, char * argv[])
 
         if(num_muon == 0)
             continue;
-        if(num_pi != 1)
-            continue;
+        if(numPionRequire < 2)
+            if(num_pi != numPionRequire)
+                continue;
+        if(numPionRequire > 1)
+            if(num_pi < 2)
+                continue;
         if(num_neutron == 0)
             continue;
 
